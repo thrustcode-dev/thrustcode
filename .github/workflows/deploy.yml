@@ -38,9 +38,9 @@ jobs:
         run: cargo install wasm-bindgen-cli
 
       - name: Build with Trunk
-        # If deploying to https://<user>.github.io/<repo>/, set PUBLIC_URL=/repo/
-        # For a custom domain (thrustcode.dev), leave PUBLIC_URL empty
-        run: trunk build --release
+        # Sous-répertoire GitHub Pages : https://<user>.github.io/thrustcode.dev/
+        # Remplace "thrustcode.dev" par le nom exact de ton repo si différent
+        run: trunk build --release --public-url /thrustcode.dev/
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
