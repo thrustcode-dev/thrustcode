@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thrustcode — Performance · Security · Green IT</title>
+<!-- Open Graph / Social -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://thrustcode.dev/">
+<meta property="og:title" content="Thrustcode — Performance · Security · Green IT">
+<meta property="og:description" content="ESN spécialisée Rust. Migration de goulots, sécurité mémoire, Green IT. Audit de performance gratuit en 48h.">
+<meta property="og:image" content="https://thrustcode.dev/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Thrustcode — Performance · Security · Green IT">
+<meta name="twitter:description" content="ESN spécialisée Rust. Migration de goulots, sécurité mémoire, Green IT. Audit de performance gratuit en 48h.">
+<meta name="twitter:image" content="https://thrustcode.dev/og-image.png">
+<meta name="description" content="ESN spécialisée Rust. Migration de goulots d'étranglement, sécurité mémoire, Green IT. Premier atelier de diagnostic offert.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─── APPLE DESIGN TOKENS ─────────────────────────────────────────── */
+:root {
+  /* Apple system colors */
+  --apple-blue:    #CC4B20;
+  --apple-blue-l:  #E8692A;
+  --apple-blue-d:  #A83918;
+  --apple-green:   #30D158;
+  --apple-orange:  #FF9F0A;
+  --apple-red:     #FF3B30;
+  --apple-purple:  #BF5AF2;
+  --apple-teal:    #5AC8FA;
+
+  /* Backgrounds — deep black like mac pro dark */
+  --bg0: #000000;
+  --bg1: #0A0A0A;
+  --bg2: #111111;
+  --bg3: #161616;
+  --bg4: #1C1C1E;
+
+  /* Text — SF Pro style */
+  --t1: rgba(255,255,255,0.95);
+  --t2: rgba(255,255,255,0.60);
+  --t3: rgba(255,255,255,0.35);
+  --t4: rgba(255,255,255,0.18);
+
+  /* Glass surfaces */
+  --glass-bg:       rgba(255,255,255,0.055);
+  --glass-bg-hover: rgba(255,255,255,0.085);
+  --glass-border:   rgba(255,255,255,0.10);
+  --glass-border-h: rgba(255,255,255,0.20);
+  --glass-blur:     24px;
+
+  /* Typography — SF Pro mimic */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+
+  /* Radii */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 30px;
+  --r-full: 999px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+body {
+  background: var(--bg0);
+  color: var(--t1);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ─── CURSOR ──────────────────────────────────────────────────────── */
+#cur { width:8px;height:8px;background:#fff;border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:transform .1s; }
+#cur-ring { width:40px;height:40px;border:1px solid rgba(255,255,255,0.3);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform .18s ease-out,width .25s,height .25s,border-color .25s; }
+body:has(a:hover) #cur-ring,body:has(button:hover) #cur-ring { width:56px;height:56px;border-color:var(--apple-blue-l); }
+
+/* ─── MESH BACKGROUNDS ────────────────────────────────────────────── */
+.mesh-wrap { position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0; }
+.mesh-orb {
+  position:absolute;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:0.35;
+}
+
+/* ─── NAV ─────────────────────────────────────────────────────────── */
+nav {
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;
+  height:52px;
+  background:rgba(0,0,0,0.72);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--glass-border);
+  transition:background .3s;
+}
+.logo {
+  font-size:1rem;font-weight:600;color:var(--t1);text-decoration:none;
+  letter-spacing:-0.02em;display:flex;align-items:center;gap:7px;
+}
+.logo-mark {
+  width:22px;height:22px;
+  background:var(--apple-blue);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-mark svg { width:12px;height:12px;fill:#fff; }
+.nav-links { display:flex;gap:0;list-style:none; }
+.nav-links a {
+  font-size:0.8rem;font-weight:400;color:var(--t2);text-decoration:none;
+  padding:0 0.85rem;letter-spacing:-0.01em;transition:color .2s;
+}
+.nav-links a:hover { color:var(--t1); }
+.nav-pill {
+  background:var(--apple-blue);color:#fff;border:none;
+  padding:0.45rem 1.1rem;border-radius:var(--r-full);
+  font-family:var(--font);font-size:0.82rem;font-weight:500;
+  cursor:none;letter-spacing:-0.01em;
+  transition:background .2s,transform .15s;
+}
+.nav-pill:hover { background:var(--apple-blue-l);transform:scale(1.03); }
+
+/* ─── HERO ────────────────────────────────────────────────────────── */
+.hero {
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:8rem 2rem 6rem;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero-eyebrow {
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(var(--glass-blur));
+  border-radius:var(--r-full);
+  padding:0.35rem 1rem;
+  font-size:0.78rem;font-weight:500;color:var(--apple-blue-l);
+  letter-spacing:0.01em;margin-bottom:2rem;
+  opacity:0;animation:fadeUp .7s .2s forwards;
+}
+.eyebrow-dot { width:6px;height:6px;background:var(--apple-blue-l);border-radius:50%;animation:pulse 2s infinite; }
+
+.hero-title {
+  font-size:clamp(3rem,7.5vw,7rem);
+  font-weight:600;
+  letter-spacing:-0.04em;
+  line-height:1.0;
+  max-width:860px;
+  background:linear-gradient(180deg,#fff 40%,rgba(255,255,255,0.45) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  opacity:0;animation:fadeUp .8s .35s forwards;
+}
+.hero-sub {
+  font-size:1.1rem;font-weight:300;color:var(--t2);
+  max-width:560px;margin:1.75rem auto 0;line-height:1.65;
+  opacity:0;animation:fadeUp .7s .5s forwards;
+}
+.hero-actions {
+  display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;
+  margin-top:2.5rem;
+  opacity:0;animation:fadeUp .7s .65s forwards;
+}
+.btn-apple {
+  background:var(--apple-blue);color:#fff;border:none;
+  padding:0.8rem 1.75rem;border-radius:var(--r-full);
+  font-family:var(--font);font-size:0.95rem;font-weight:500;
+  cursor:none;letter-spacing:-0.01em;
+  transition:background .2s,transform .15s,box-shadow .2s;
+}
+.btn-apple:hover {
+  background:var(--apple-blue-l);
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(204,75,32,0.4);
+}
+.btn-glass {
+  background:var(--glass-bg);color:var(--t1);
+  border:1px solid var(--glass-border);
+  padding:0.8rem 1.75rem;border-radius:var(--r-full);
+  font-family:var(--font);font-size:0.95rem;font-weight:400;
+  cursor:none;letter-spacing:-0.01em;
+  backdrop-filter:blur(var(--glass-blur));
+  transition:background .2s,border-color .2s,transform .15s;
+}
+.btn-glass:hover { background:var(--glass-bg-hover);border-color:var(--glass-border-h);transform:translateY(-2px); }
+
+/* Hero stats glass row */
+.hero-stats {
+  display:flex;gap:1px;margin-top:4rem;
+  background:var(--glass-border);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+  backdrop-filter:blur(var(--glass-blur));
+  opacity:0;animation:fadeUp .7s .8s forwards;
+}
+.stat-cell {
+  flex:1;padding:1.25rem 1.75rem;
+  background:var(--glass-bg);
+  text-align:center;
+  transition:background .2s;
+}
+.stat-cell:hover { background:var(--glass-bg-hover); }
+.stat-n {
+  font-size:2rem;font-weight:600;letter-spacing:-0.04em;
+  background:linear-gradient(135deg,#fff,rgba(255,255,255,0.7));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.stat-n .acc { -webkit-text-fill-color:var(--apple-blue-l); }
+.stat-l { font-size:0.72rem;font-weight:400;color:var(--t3);letter-spacing:0.04em;margin-top:3px;text-transform:uppercase; }
+
+/* ─── TICKER ──────────────────────────────────────────────────────── */
+.ticker-wrap {
+  background:rgba(255,255,255,0.03);
+  border-top:1px solid var(--glass-border);
+  border-bottom:1px solid var(--glass-border);
+  padding:0.8rem 0;overflow:hidden;white-space:nowrap;
+}
+.ticker { display:inline-flex;animation:ticker 32s linear infinite; }
+.t-item {
+  font-size:0.75rem;font-weight:400;color:var(--t3);
+  letter-spacing:0.06em;padding:0 2.5rem;
+  display:inline-flex;align-items:center;gap:1rem;
+}
+.t-dot { width:3px;height:3px;background:var(--apple-blue-l);border-radius:50%;flex-shrink:0; }
+@keyframes ticker { from{transform:translateX(0)}to{transform:translateX(-50%)} }
+
+/* ─── SECTIONS ────────────────────────────────────────────────────── */
+section { position:relative;z-index:1; }
+.section-eyebrow {
+  font-size:0.72rem;font-weight:500;color:var(--apple-blue-l);
+  letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.75rem;
+}
+.section-h {
+  font-size:clamp(2rem,4vw,3.2rem);font-weight:600;
+  letter-spacing:-0.03em;line-height:1.1;
+}
+.section-h .dim { color:var(--t3); }
+.section-h .hi {
+  background:linear-gradient(135deg,var(--apple-blue-l),var(--apple-purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.section-sub { font-size:1rem;color:var(--t2);max-width:480px;line-height:1.65;margin-top:0.85rem; }
+
+/* ─── PILLARS ─────────────────────────────────────────────────────── */
+.pillars { padding:6rem 2.5rem;background:var(--bg1); }
+.pillars-inner { max-width:1100px;margin:0 auto; }
+.pillars-grid {
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;
+  margin-top:3.5rem;
+  background:var(--glass-border);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-xl);overflow:hidden;
+}
+.pillar-card {
+  background:var(--glass-bg);
+  backdrop-filter:blur(var(--glass-blur));
+  padding:2.5rem 2rem;
+  position:relative;overflow:hidden;
+  transition:background .3s;
+}
+.pillar-card:hover { background:var(--glass-bg-hover); }
+.pillar-card::after {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:var(--card-line,var(--apple-blue));
+  opacity:0;transition:opacity .4s;
+}
+.pillar-card:hover::after { opacity:1; }
+.pillar-icon-wrap {
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:1.5rem;font-size:1.3rem;
+}
+.pillar-name {
+  font-size:1.1rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.65rem;
+}
+.pillar-desc { font-size:0.88rem;color:var(--t2);line-height:1.65; }
+.pillar-metric {
+  font-size:0.72rem;color:var(--t3);
+  margin-top:1.5rem;padding-top:1rem;
+  border-top:1px solid var(--glass-border);
+  letter-spacing:0.03em;
+}
+
+/* ─── PROCESS ─────────────────────────────────────────────────────── */
+.process { padding:7rem 2.5rem;background:var(--bg0); }
+.process-inner { max-width:900px;margin:0 auto; }
+.process-steps { margin-top:4rem;display:flex;flex-direction:column;gap:2px; }
+
+.p-step {
+  display:grid;grid-template-columns:56px 1fr;gap:1.5rem;
+  padding:0 0 2.5rem 0;
+  position:relative;
+}
+.p-step::before {
+  content:'';position:absolute;
+  left:27px;top:52px;bottom:0;
+  width:1px;
+  background:linear-gradient(to bottom,var(--glass-border-h),transparent);
+}
+.p-step:last-child::before { display:none; }
+
+.p-num-wrap { display:flex;flex-direction:column;align-items:center;padding-top:2px; }
+.p-num {
+  width:44px;height:44px;border-radius:50%;
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(var(--glass-blur));
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:600;color:var(--t2);
+  flex-shrink:0;
+  transition:background .3s,border-color .3s,color .3s;
+}
+.p-step:hover .p-num {
+  background:rgba(0,113,227,0.15);
+  border-color:rgba(204,75,32,0.4);
+  color:var(--apple-blue-l);
+}
+.p-step:last-child .p-num {
+  background:rgba(48,209,88,0.1);
+  border-color:rgba(48,209,88,0.3);
+  color:var(--apple-green);
+}
+
+.p-body { padding-top:8px; }
+.p-tag {
+  display:inline-block;font-size:0.68rem;font-weight:500;
+  padding:2px 10px;border-radius:var(--r-full);
+  margin-bottom:0.6rem;letter-spacing:0.04em;
+}
+.p-dur { font-size:0.72rem;color:var(--t3);margin-left:0.5rem; }
+.p-title { font-size:1.15rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.5rem;line-height:1.2; }
+.p-desc { font-size:0.88rem;color:var(--t2);line-height:1.7;max-width:560px;margin-bottom:1rem; }
+.p-chips { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem; }
+.chip {
+  font-size:0.72rem;color:var(--t3);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-full);padding:3px 10px;
+  backdrop-filter:blur(12px);
+}
+.p-visual {
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-md);padding:1rem 1.25rem;
+  backdrop-filter:blur(var(--glass-blur));
+  max-width:520px;
+}
+
+/* code block */
+.code-block { display:flex;flex-direction:column;gap:3px; }
+.cb-comment { font-size:0.72rem;color:var(--t4);font-family:monospace; }
+.cb-line { font-size:0.78rem;color:var(--t2);font-family:monospace; }
+.cb-kw { color:var(--apple-blue-l); }
+.cb-str { color:var(--apple-green); }
+.cb-ok { font-size:0.72rem;color:var(--apple-green);font-family:monospace;margin-top:6px;padding-top:8px;border-top:1px solid var(--glass-border); }
+
+/* bar chart */
+.bars { display:flex;flex-direction:column;gap:9px; }
+.b-row { display:flex;align-items:center;gap:10px; }
+.b-lbl { font-size:0.72rem;color:var(--t2);min-width:88px;font-weight:400; }
+.b-track { flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden; }
+.b-fill { height:100%;border-radius:3px;background:var(--bc); }
+.b-val { font-size:0.72rem;font-weight:500;min-width:54px;text-align:right; }
+
+/* sprint list */
+.sprints { display:flex;flex-direction:column;gap:7px; }
+.spr { display:flex;align-items:center;gap:9px;font-size:0.78rem;color:var(--t2); }
+.spr-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
+.spr-dot.done { background:var(--apple-green); }
+.spr-dot.live { background:var(--apple-blue-l);animation:pulse 1.5s infinite; }
+.spr-dot.wait { background:rgba(255,255,255,0.15); }
+.spr-badge { margin-left:auto;font-size:0.65rem;padding:2px 8px;border-radius:var(--r-full); }
+.sb-done { background:rgba(48,209,88,0.1);color:var(--apple-green); }
+.sb-live { background:rgba(232,105,42,0.1);color:var(--apple-blue-l); }
+.sb-wait { background:rgba(255,255,255,0.05);color:var(--t3); }
+
+/* before/after metrics */
+.ba-wrap { display:flex;gap:1.5rem; }
+.ba-pair { display:flex;align-items:center;gap:0.75rem; }
+.ba-col { display:flex;flex-direction:column;gap:2px; }
+.ba-lbl { font-size:0.62rem;color:var(--t3);letter-spacing:0.06em; }
+.ba-val { font-size:0.95rem;font-weight:600;letter-spacing:-0.02em; }
+.ba-val.before { color:var(--t3);text-decoration:line-through;text-decoration-color:rgba(255,59,48,0.5); }
+.ba-val.after { color:var(--apple-green); }
+.ba-arrow { color:var(--t3);font-size:0.9rem; }
+.ba-sub { font-size:0.62rem;color:var(--t4); }
+
+/* outcomes */
+.outcomes { display:flex;flex-direction:column;gap:7px; }
+.oc { display:flex;align-items:center;gap:10px;font-size:0.82rem;color:var(--t2); }
+.oc-icon {
+  width:22px;height:22px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
+}
+
+/* process CTA */
+.p-cta {
+  margin-top:3.5rem;padding:2rem 2.5rem;
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-xl);
+  backdrop-filter:blur(var(--glass-blur));
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
+}
+.p-cta-text { font-size:1.15rem;font-weight:600;letter-spacing:-0.02em; }
+.p-cta-note { font-size:0.78rem;color:var(--t3); }
+.p-cta-right { display:flex;align-items:center;gap:1rem; }
+
+/* ─── SERVICES ────────────────────────────────────────────────────── */
+.services { padding:6rem 2.5rem;background:var(--bg1); }
+.services-inner { max-width:1100px;margin:0 auto; }
+.svc-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:3.5rem; }
+.svc-card {
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-lg);padding:1.75rem;
+  backdrop-filter:blur(var(--glass-blur));
+  transition:background .25s,border-color .25s,transform .2s;
+  position:relative;overflow:hidden;
+}
+.svc-card:hover {
+  background:var(--glass-bg-hover);
+  border-color:var(--glass-border-h);
+  transform:translateY(-4px);
+}
+.svc-card::before {
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 0% 0%,rgba(204,75,32,0.08),transparent 60%);
+  opacity:0;transition:opacity .3s;
+  pointer-events:none;
+}
+.svc-card:hover::before { opacity:1; }
+.svc-cat {
+  font-size:0.7rem;font-weight:500;color:var(--t3);
+  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.6rem;
+}
+.svc-name { font-size:1rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.5rem;line-height:1.3; }
+.svc-desc { font-size:0.83rem;color:var(--t2);line-height:1.6;margin-bottom:1rem; }
+.svc-kpi {
+  font-size:0.72rem;color:var(--t3);
+  padding-top:0.85rem;
+  border-top:1px solid var(--glass-border);
+  letter-spacing:0.02em;
+}
+.new-tag {
+  display:inline-block;font-size:0.65rem;font-weight:500;
+  background:rgba(232,105,42,0.12);color:var(--apple-blue-l);
+  border:1px solid rgba(232,105,42,0.25);
+  border-radius:var(--r-full);padding:2px 8px;margin-left:7px;
+  letter-spacing:0.04em;vertical-align:middle;
+}
+
+/* ─── LEAD MAGNETS ────────────────────────────────────────────────── */
+.magnets { padding:6rem 2.5rem;background:var(--bg0); }
+.magnets-inner { max-width:1100px;margin:0 auto; }
+.mag-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:3.5rem; }
+.mag-card {
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-lg);
+  padding:1.75rem;
+  backdrop-filter:blur(var(--glass-blur));
+  display:flex;flex-direction:column;
+  transition:background .25s,border-color .25s,transform .2s;
+  position:relative;overflow:hidden;
+}
+.mag-card:hover {
+  background:var(--glass-bg-hover);
+  border-color:var(--glass-border-h);
+  transform:translateY(-4px);
+}
+.mag-type {
+  font-size:0.7rem;font-weight:500;letter-spacing:0.1em;
+  text-transform:uppercase;margin-bottom:0.75rem;
+  display:flex;align-items:center;gap:6px;
+}
+.mag-dot { width:5px;height:5px;border-radius:50%;flex-shrink:0; }
+.mag-title { font-size:1rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.5rem;line-height:1.3; }
+.mag-desc { font-size:0.83rem;color:var(--t2);line-height:1.6;flex:1; }
+.mag-cta {
+  font-size:0.8rem;color:var(--apple-blue-l);
+  margin-top:1.25rem;padding-top:0.85rem;
+  border-top:1px solid var(--glass-border);
+  display:flex;align-items:center;gap:5px;
+  transition:gap .2s;
+}
+.mag-card:hover .mag-cta { gap:8px; }
+
+/* ─── FINAL CTA ───────────────────────────────────────────────────── */
+.final { padding:9rem 2.5rem;background:var(--bg1);text-align:center;position:relative;overflow:hidden; }
+.final-card {
+  max-width:640px;margin:0 auto;
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-xl);
+  padding:3.5rem 3rem;
+  backdrop-filter:blur(var(--glass-blur));
+  position:relative;z-index:1;
+}
+.final-title { font-size:clamp(2rem,4.5vw,3rem);font-weight:600;letter-spacing:-0.04em;line-height:1.05;margin-bottom:1rem; }
+.final-sub { font-size:0.95rem;color:var(--t2);line-height:1.65;margin-bottom:2rem; }
+.email-row { display:flex;gap:8px;margin-bottom:0.75rem; }
+.email-in {
+  flex:1;background:rgba(255,255,255,0.06);
+  border:1px solid var(--glass-border);
+  color:var(--t1);padding:0.8rem 1rem;
+  border-radius:var(--r-full);font-family:var(--font);font-size:0.9rem;
+  outline:none;transition:border-color .2s,background .2s;
+}
+.email-in::placeholder { color:var(--t3); }
+.email-in:focus { border-color:rgba(0,113,227,0.5);background:rgba(204,75,32,0.06); }
+.email-send {
+  background:var(--apple-blue);color:#fff;border:none;
+  padding:0.8rem 1.5rem;border-radius:var(--r-full);
+  font-family:var(--font);font-size:0.85rem;font-weight:500;
+  cursor:none;white-space:nowrap;
+  transition:background .2s,box-shadow .2s;
+}
+.email-send:hover { background:var(--apple-blue-l);box-shadow:0 4px 20px rgba(204,75,32,0.4); }
+.final-note { font-size:0.72rem;color:var(--t3);letter-spacing:0.03em; }
+
+/* ─── FOOTER ──────────────────────────────────────────────────────── */
+footer {
+  background:var(--bg0);
+  border-top:1px solid var(--glass-border);
+  padding:3rem 2.5rem 1.5rem;
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;
+  max-width:none;
+}
+.foot-logo { margin-bottom:0.75rem; }
+.foot-desc { font-size:0.83rem;color:var(--t3);line-height:1.6;max-width:240px; }
+.foot-col h5 { font-size:0.72rem;font-weight:500;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.85rem; }
+.foot-links { list-style:none;display:flex;flex-direction:column;gap:0.5rem; }
+.foot-links a { font-size:0.85rem;color:var(--t2);text-decoration:none;transition:color .2s; }
+.foot-links a:hover { color:var(--t1); }
+.foot-bottom {
+  background:var(--bg0);border-top:1px solid var(--glass-border);
+  padding:1.25rem 2.5rem;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.foot-copy,.foot-tech { font-size:0.72rem;color:var(--t3);letter-spacing:0.04em; }
+.foot-tech span { color:var(--apple-blue-l); }
+
+/* ─── REVEAL ──────────────────────────────────────────────────────── */
+.reveal { opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease; }
+.reveal.visible { opacity:1;transform:translateY(0); }
+
+/* ─── KEYFRAMES ───────────────────────────────────────────────────── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)} }
+@keyframes float {
+  0%,100%{transform:translate(0,0)}
+  33%{transform:translate(30px,-20px)}
+  66%{transform:translate(-20px,25px)}
+}
+
+/* ─── SCROLLBAR ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:var(--bg0); }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:3px; }
+::selection { background:rgba(0,113,227,0.3); }
+
+/* ─── TESTIMONIALS ────────────────────────────────────────────────── */
+.testimonials { padding:6rem 2.5rem;background:var(--bg0); }
+.testimonials-inner { max-width:1100px;margin:0 auto; }
+.testi-grid {
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:3.5rem;
+}
+.testi-card {
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-lg);padding:2rem;
+  backdrop-filter:blur(var(--glass-blur));
+  transition:background .25s,border-color .25s,transform .2s;
+  display:flex;flex-direction:column;gap:1.5rem;
+}
+.testi-card:hover {
+  background:var(--glass-bg-hover);
+  border-color:var(--glass-border-h);
+  transform:translateY(-4px);
+}
+.testi-quote {
+  font-size:0.9rem;color:var(--t2);line-height:1.7;
+  font-style:italic;
+  position:relative;padding-left:1rem;
+  border-left:2px solid var(--apple-blue-l);
+}
+.testi-author {
+  display:flex;align-items:center;gap:0.85rem;
+}
+.testi-avatar {
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:600;color:#fff;flex-shrink:0;
+}
+.testi-name { font-size:0.88rem;font-weight:600;letter-spacing:-0.01em; }
+.testi-role { font-size:0.72rem;color:var(--t3);margin-top:2px; }
+.testi-metric {
+  margin-left:auto;text-align:center;flex-shrink:0;
+}
+.testi-m-val {
+  font-size:1.3rem;font-weight:600;letter-spacing:-0.03em;
+  background:linear-gradient(135deg,var(--apple-blue-l),var(--apple-green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.testi-m-lbl { font-size:0.62rem;color:var(--t3);letter-spacing:0.06em;text-transform:uppercase; }
+
+/* ─── FORM AMÉLIORÉ ───────────────────────────────────────────────── */
+.form-row { display:flex;gap:8px;margin-bottom:0px; }
+.contact-textarea {
+  width:100%;min-height:90px;resize:vertical;border-radius:var(--r-md) !important;
+  padding:0.8rem 1rem !important;font-family:var(--font);line-height:1.5;
+}
+.form-success, .form-error {
+  margin-top:12px;padding:0.85rem 1rem;
+  border-radius:var(--r-md);
+  display:flex;align-items:center;gap:10px;
+  font-size:0.85rem;
+}
+.form-success { background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);color:var(--t2); }
+.form-error { background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);color:var(--t2); }
+
+/* ─── MOBILE ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  nav { padding:0 1.2rem; }
+  .nav-links { display:none; }
+  .pillars-grid { grid-template-columns:1fr; }
+  .testi-grid { grid-template-columns:1fr; }
+  footer { grid-template-columns:1fr 1fr;gap:2rem; }
+  .form-row { flex-direction:column; }
+  .hero-stats { flex-direction:column; }
+  .stat-cell { padding:1rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 12 12"><path d="M6 1L11 4v4L6 11 1 8V4z"/></svg>
+    </div>
+    thrustcode
+  </a>
+  <ul class="nav-links">
+    <li><a href="#pillars">Piliers</a></li>
+    <li><a href="#process">Processus</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#magnets">Ressources</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <button class="nav-pill">Audit gratuit</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="mesh-wrap">
+    <div class="mesh-orb" style="width:700px;height:700px;background:radial-gradient(circle,rgba(0,113,227,0.18),transparent 70%);top:-200px;left:-150px;animation:float 18s ease-in-out infinite;"></div>
+    <div class="mesh-orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(191,90,242,0.1),transparent 70%);bottom:0;right:-100px;animation:float 22s ease-in-out infinite reverse;"></div>
+    <div class="mesh-orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(48,209,88,0.08),transparent 70%);bottom:20%;left:15%;animation:float 16s ease-in-out infinite 3s;"></div>
+  </div>
+
+  <div class="hero-eyebrow"><span class="eyebrow-dot"></span>ESN spécialisée Rust · Paris · Worldwide</div>
+
+  <h1 class="hero-title">Construit pour durer. Éprouvé pour garantir votre sécurité.</h1>
+
+  <p class="hero-sub">Thrustcode construit des solutions système en Rust — performance extrême, sécurité mémoire by design, empreinte énergétique réduite de 98%.</p>
+
+  <div class="hero-actions">
+    <button class="btn-apple">Démarrer un projet →</button>
+    <button class="btn-glass">Voir notre approche</button>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-cell">
+      <div class="stat-n"><span class="acc">60</span>×</div>
+      <div class="stat-l">Plus rapide que Python</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-n">−<span class="acc">98</span>%</div>
+      <div class="stat-l">Énergie vs Python</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-n">−<span class="acc">70</span>%</div>
+      <div class="stat-l">Surface vulnérabilités</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-n"><span class="acc">10</span>+</div>
+      <div class="stat-l">Ans langue préférée devs</div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="t-item">Performance extrême <span class="t-dot"></span></span>
+    <span class="t-item">Sécurité mémoire by design <span class="t-dot"></span></span>
+    <span class="t-item">Green IT · −98% vs Python <span class="t-dot"></span></span>
+    <span class="t-item">NSA & CISA recommandent Rust <span class="t-dot"></span></span>
+    <span class="t-item">AWS · Microsoft · Android · Linux <span class="t-dot"></span></span>
+    <span class="t-item">Zero-cost abstractions <span class="t-dot"></span></span>
+    <span class="t-item">Borrow checker · pas de GC <span class="t-dot"></span></span>
+    <span class="t-item">Performance extrême <span class="t-dot"></span></span>
+    <span class="t-item">Sécurité mémoire by design <span class="t-dot"></span></span>
+    <span class="t-item">Green IT · −98% vs Python <span class="t-dot"></span></span>
+    <span class="t-item">NSA & CISA recommandent Rust <span class="t-dot"></span></span>
+    <span class="t-item">AWS · Microsoft · Android · Linux <span class="t-dot"></span></span>
+    <span class="t-item">Zero-cost abstractions <span class="t-dot"></span></span>
+    <span class="t-item">Borrow checker · pas de GC <span class="t-dot"></span></span>
+  </div>
+</div>
+
+<!-- PILLARS -->
+<section class="pillars" id="pillars">
+  <div class="pillars-inner">
+    <div class="section-eyebrow reveal">Nos piliers</div>
+    <h2 class="section-h reveal">Trois raisons de choisir <span class="hi">Rust.</span></h2>
+
+    <div class="pillars-grid reveal">
+      <div class="pillar-card" style="--card-line:var(--apple-blue-l)">
+        <div class="pillar-icon-wrap" style="background:rgba(232,105,42,0.1)">⚡</div>
+        <div class="pillar-name">Performance</div>
+        <p class="pillar-desc">Compilation native, zéro runtime, abstractions zéro coût. Vos systèmes tournent au niveau du silicium. 60× plus rapide que Python sur les tâches CPU-intensives.</p>
+        <div class="pillar-metric">2× Go · 60× Python · latence &lt;15ms @ 1k rps</div>
+      </div>
+      <div class="pillar-card" style="--card-line:var(--apple-purple)">
+        <div class="pillar-icon-wrap" style="background:rgba(191,90,242,0.1)">🔒</div>
+        <div class="pillar-name">Sécurité</div>
+        <p class="pillar-desc">Le borrow checker élimine à la compilation 70% des CVE critiques. Recommandé par NSA et CISA depuis 2024. Android est passé de 76% à 24% de bugs mémoire.</p>
+        <div class="pillar-metric">−70% surface vulnérabilités · conformité NIS2 / DORA</div>
+      </div>
+      <div class="pillar-card" style="--card-line:var(--apple-green)">
+        <div class="pillar-icon-wrap" style="background:rgba(48,209,88,0.1)">🌿</div>
+        <div class="pillar-name">Green IT</div>
+        <p class="pillar-desc">−50% vs Java, −98% vs Python en consommation énergétique. Moins de serveurs, moins de CO₂, moins de coûts cloud. Données mesurées, exportables en CSRD.</p>
+        <div class="pillar-metric">−98% vs Python · −50% vs Java · CSRD-ready</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process" id="process">
+  <div class="mesh-wrap">
+    <div class="mesh-orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(48,209,88,0.07),transparent 70%);top:10%;right:-150px;animation:float 20s ease-in-out infinite;"></div>
+  </div>
+  <div class="process-inner">
+    <div class="section-eyebrow reveal">Comment ça marche</div>
+    <h2 class="section-h reveal">De votre besoin à la <span class="hi">mise en production.</span></h2>
+    <p class="section-sub reveal">Un processus structuré en 5 étapes, conçu pour minimiser les risques et maximiser la valeur livrée à chaque sprint.</p>
+
+    <div class="process-steps reveal">
+
+      <!-- STEP 1 -->
+      <div class="p-step">
+        <div class="p-num-wrap"><div class="p-num">01</div></div>
+        <div class="p-body">
+          <div>
+            <span class="p-tag" style="background:rgba(232,105,42,0.1);color:var(--apple-blue-l)">Découverte</span>
+            <span class="p-dur">— Semaine 1</span>
+          </div>
+          <h3 class="p-title">Diagnostic & cadrage</h3>
+          <p class="p-desc">Nous analysons votre contexte en profondeur : stack actuelle, goulots identifiés, contraintes réglementaires, équipe en place. Un atelier de 2 jours avec vos équipes techniques et décideurs pour aligner vision et faisabilité.</p>
+          <div class="p-chips">
+            <span class="chip">Cartographie codebase</span>
+            <span class="chip">Scoring performance / sécu / green</span>
+            <span class="chip">3 axes prioritaires</span>
+          </div>
+          <div class="p-visual">
+            <div class="code-block">
+              <span class="cb-comment">// Analyse statique en cours...</span>
+              <span class="cb-line"><span class="cb-kw">cargo</span> audit --json | jq <span class="cb-str">'.vulnerabilities'</span></span>
+              <span class="cb-line"><span class="cb-kw">cargo</span> clippy <span class="cb-str">-- -D warnings -W clippy::all</span></span>
+              <span class="cb-line"><span class="cb-kw">cargo</span> flamegraph <span class="cb-str">--bin</span> api_server</span>
+              <span class="cb-ok">✓ 147 modules · 12 points critiques · 3 quick wins identifiés</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="p-step">
+        <div class="p-num-wrap"><div class="p-num">02</div></div>
+        <div class="p-body">
+          <div>
+            <span class="p-tag" style="background:rgba(191,90,242,0.1);color:var(--apple-purple)">Planification</span>
+            <span class="p-dur">— Semaine 2</span>
+          </div>
+          <h3 class="p-title">Roadmap & proposition technique</h3>
+          <p class="p-desc">Sur la base du diagnostic, nous construisons un plan de migration priorisé par ROI. Chaque module est évalué selon trois critères : impact performance, réduction risque sécurité, gain énergétique. Vous validez avant qu'une ligne de code soit écrite.</p>
+          <div class="p-chips">
+            <span class="chip">Roadmap 30 / 60 / 90 jours</span>
+            <span class="chip">ROI estimé par module</span>
+            <span class="chip">Architecture cible Rust</span>
+          </div>
+          <div class="p-visual">
+            <div class="bars">
+              <div class="b-row">
+                <span class="b-lbl">Auth service</span>
+                <div class="b-track"><div class="b-fill" style="width:88%;--bc:var(--apple-green)"></div></div>
+                <span class="b-val" style="color:var(--apple-green)">ROI ×4.2</span>
+              </div>
+              <div class="b-row">
+                <span class="b-lbl">Data pipeline</span>
+                <div class="b-track"><div class="b-fill" style="width:72%;--bc:var(--apple-blue-l)"></div></div>
+                <span class="b-val" style="color:var(--apple-blue-l)">ROI ×3.1</span>
+              </div>
+              <div class="b-row">
+                <span class="b-lbl">API gateway</span>
+                <div class="b-track"><div class="b-fill" style="width:55%;--bc:var(--apple-orange)"></div></div>
+                <span class="b-val" style="color:var(--apple-orange)">ROI ×2.4</span>
+              </div>
+              <div class="b-row">
+                <span class="b-lbl">Cache layer</span>
+                <div class="b-track"><div class="b-fill" style="width:38%;--bc:var(--apple-purple)"></div></div>
+                <span class="b-val" style="color:var(--apple-purple)">ROI ×1.8</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="p-step">
+        <div class="p-num-wrap"><div class="p-num">03</div></div>
+        <div class="p-body">
+          <div>
+            <span class="p-tag" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">Développement</span>
+            <span class="p-dur">— Semaines 3 → N</span>
+          </div>
+          <h3 class="p-title">Migration incrémentale en sprints</h3>
+          <p class="p-desc">Nos ingénieurs Rust travaillent module par module, en cohabitation avec votre code existant via FFI (Foreign Function Interface). Chaque sprint de 2 semaines livre du code testé, documenté et déployable. Zéro downtime garanti via le Strangler Fig Pattern.</p>
+          <div class="p-chips">
+            <span class="chip">Strangler Fig Pattern</span>
+            <span class="chip">Sprints de 2 semaines</span>
+            <span class="chip">Tests non-régression continus</span>
+            <span class="chip">FFI cohabitation</span>
+          </div>
+          <div class="p-visual">
+            <div class="sprints">
+              <div class="spr"><div class="spr-dot done"></div><span>Sprint 1 · Auth service</span><span class="spr-badge sb-done">✓ Livré</span></div>
+              <div class="spr"><div class="spr-dot done"></div><span>Sprint 2 · Data pipeline</span><span class="spr-badge sb-done">✓ Livré</span></div>
+              <div class="spr"><div class="spr-dot live"></div><span>Sprint 3 · API gateway</span><span class="spr-badge sb-live">● En cours</span></div>
+              <div class="spr"><div class="spr-dot wait"></div><span>Sprint 4 · Cache layer</span><span class="spr-badge sb-wait">Planifié</span></div>
+              <div class="spr"><div class="spr-dot wait"></div><span>Sprint 5 · WebSocket service</span><span class="spr-badge sb-wait">Planifié</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="p-step">
+        <div class="p-num-wrap"><div class="p-num">04</div></div>
+        <div class="p-body">
+          <div>
+            <span class="p-tag" style="background:rgba(255,159,10,0.1);color:var(--apple-orange)">Validation</span>
+            <span class="p-dur">— J−14 avant go-live</span>
+          </div>
+          <h3 class="p-title">Hardening, tests & mesures</h3>
+          <p class="p-desc">Avant chaque mise en production : tests de charge (k6), audit sécurité (cargo-audit, fuzzing), mesure énergétique réelle (Scaphandre / RAPL). Les résultats sont documentés et comparés à la baseline initiale avec des données auditables.</p>
+          <div class="p-chips">
+            <span class="chip">Benchmark avant / après</span>
+            <span class="chip">cargo-audit + fuzzing</span>
+            <span class="chip">Mesure CO₂ Scaphandre</span>
+            <span class="chip">Tests k6 sous charge</span>
+          </div>
+          <div class="p-visual">
+            <div class="ba-wrap">
+              <div class="ba-pair">
+                <div class="ba-col">
+                  <div class="ba-lbl">AVANT</div>
+                  <div class="ba-val before">2 840 ms</div>
+                  <div class="ba-sub">latence p99</div>
+                </div>
+                <div class="ba-arrow">→</div>
+                <div class="ba-col">
+                  <div class="ba-lbl">APRÈS</div>
+                  <div class="ba-val after">47 ms</div>
+                  <div class="ba-sub">latence p99</div>
+                </div>
+              </div>
+              <div class="ba-pair">
+                <div class="ba-col">
+                  <div class="ba-lbl">AVANT</div>
+                  <div class="ba-val before">18 instances</div>
+                  <div class="ba-sub">EC2 t3.large</div>
+                </div>
+                <div class="ba-arrow">→</div>
+                <div class="ba-col">
+                  <div class="ba-lbl">APRÈS</div>
+                  <div class="ba-val after">6 instances</div>
+                  <div class="ba-sub">EC2 t3.large</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="p-step">
+        <div class="p-num-wrap"><div class="p-num last-dot">05</div></div>
+        <div class="p-body">
+          <div>
+            <span class="p-tag" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">Transfert</span>
+            <span class="p-dur">— Post go-live</span>
+          </div>
+          <h3 class="p-title">Transfert de compétences & suivi</h3>
+          <p class="p-desc">Nous ne disparaissons pas après la livraison. Sessions de pair programming avec vos développeurs, documentation architecture complète, et suivi de 30 jours post go-live. Votre équipe devient autonome sur le code Rust produit.</p>
+          <div class="p-chips">
+            <span class="chip">Pair programming sessions</span>
+            <span class="chip">Documentation complète</span>
+            <span class="chip">Suivi 30j · SLA garanti</span>
+          </div>
+          <div class="p-visual">
+            <div class="outcomes">
+              <div class="oc"><div class="oc-icon" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">✓</div>Équipe autonome sur le code Rust</div>
+              <div class="oc"><div class="oc-icon" style="background:rgba(232,105,42,0.1);color:var(--apple-blue-l)">✓</div>Documentation architecture livrée</div>
+              <div class="oc"><div class="oc-icon" style="background:rgba(255,159,10,0.1);color:var(--apple-orange)">✓</div>SLA 30 jours post go-live inclus</div>
+              <div class="oc"><div class="oc-icon" style="background:rgba(191,90,242,0.1);color:var(--apple-purple)">✓</div>Rapport de résultats signé & auditable</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="p-cta reveal">
+      <div>
+        <div class="p-cta-text">Prêt à démarrer ?</div>
+        <div class="p-cta-note">Premier atelier de diagnostic offert · Réponse &lt; 4h ouvrées</div>
+      </div>
+      <div class="p-cta-right">
+        <button class="btn-glass" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">En savoir plus</button>
+        <button class="btn-apple" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Démarrer le diagnostic →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="services-inner">
+    <div class="section-eyebrow reveal">Nos services</div>
+    <h2 class="section-h reveal">Ce que nous <span class="hi">construisons.</span></h2>
+    <div class="svc-grid">
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-blue-l)">Performance</div>
+        <div class="svc-name">Migration de goulots</div>
+        <p class="svc-desc">Identification et réécriture des chemins critiques (Python/Java/Go → Rust). ROI immédiat sur CPU et latence.</p>
+        <div class="svc-kpi">−40 à −80% CPU · ×2 à ×10 débit</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-blue-l)">Performance</div>
+        <div class="svc-name">Refactoring de code vers Rust <span class="new-tag">Nouveau</span></div>
+        <p class="svc-desc">Modernisation progressive d'un codebase existant par modules. Méthode Strangler Fig, zéro downtime, tests de non-régression continus.</p>
+        <div class="svc-kpi">−40 à −70% dette technique · couverture tests ≥ 80%</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-blue-l)">Performance</div>
+        <div class="svc-name">Microservices haute performance</div>
+        <p class="svc-desc">Services Rust natifs (Actix-web, Axum, Tokio) optimisés pour le throughput et la latence p99 sous charge massive.</p>
+        <div class="svc-kpi">60k rps · p99 &lt;15ms · cold start &lt;30ms</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-purple)">Sécurité</div>
+        <div class="svc-name">Audit sécurité mémoire</div>
+        <p class="svc-desc">Analyse selon les 20 critères CISA/NSA 2025. Rapport CVE potentiels, unsafe blocks, surface d'attaque.</p>
+        <div class="svc-kpi">100% codebase · livraison &lt;10j · NIS2 / DORA</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-purple)">Sécurité</div>
+        <div class="svc-name">Migration C/C++ → Rust</div>
+        <p class="svc-desc">Réécriture sécurisée de composants critiques exposés réseau. Élimine les classes entières de CVE mémoire.</p>
+        <div class="svc-kpi">−70% surface vulnérabilités · conformité NIS2</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-green)">Green IT</div>
+        <div class="svc-name">Audit énergétique numérique</div>
+        <p class="svc-desc">Mesure réelle de la consommation de vos workloads (RAPL, Scaphandre). Baseline CO₂ par service, par API, par batch.</p>
+        <div class="svc-kpi">Mesure milliseconde · rapport CSRD-ready</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-green)">Green IT</div>
+        <div class="svc-name">Migration green</div>
+        <p class="svc-desc">Remplacement des workloads les plus énergivores par des équivalents Rust. Économies mesurées et exportables.</p>
+        <div class="svc-kpi">−50% vs Java · −98% vs Python (source AWS)</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-teal)">Transversal</div>
+        <div class="svc-name">Embedded & firmware Rust</div>
+        <p class="svc-desc">Firmware sur microcontrôleurs (STM32, ESP32, RISC-V) en Rust bare-metal. Fiabilité et sécurité sans RTOS.</p>
+        <div class="svc-kpi">Zéro unsafe non justifié · industrie · médical</div>
+      </div>
+      <div class="svc-card reveal">
+        <div class="svc-cat" style="color:var(--apple-teal)">Transversal</div>
+        <div class="svc-name">Formation Rust équipes</div>
+        <p class="svc-desc">Parcours de montée en compétences sur mesure : 3 niveaux (découverte, intermédiaire, expert). Intra ou inter-entreprise.</p>
+        <div class="svc-kpi">3 jours → autonomie basique · 10j → prod-ready</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEAD MAGNETS -->
+<section class="magnets" id="magnets">
+  <div class="mesh-wrap">
+    <div class="mesh-orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(232,105,42,0.08),transparent 70%);top:0;left:-100px;animation:float 18s ease-in-out infinite;"></div>
+  </div>
+  <div class="magnets-inner">
+    <div class="section-eyebrow reveal">Ressources gratuites</div>
+    <h2 class="section-h reveal">Commencez par vous <span class="hi">convaincre.</span></h2>
+    <p class="section-sub reveal">Six outils concrets pour mesurer, avant toute conversation commerciale, ce que Rust peut apporter à votre stack.</p>
+
+    <div class="mag-grid">
+      <div class="mag-card reveal">
+        <div class="mag-type" style="color:var(--apple-blue-l)"><div class="mag-dot" style="background:var(--apple-blue-l)"></div>Outil interactif</div>
+        <div class="mag-title">Calculateur ROI cloud</div>
+        <p class="mag-desc">Saisissez votre stack, votre trafic mensuel et votre facture cloud. L'outil calcule les économies potentielles avec Rust (CPU, RAM, €/mois). Résultat envoyé par email.</p>
+        <div class="mag-cta">Obtenir mon estimation <span>→</span></div>
+      </div>
+      <div class="mag-card reveal">
+        <div class="mag-type" style="color:var(--apple-green)"><div class="mag-dot" style="background:var(--apple-green)"></div>Simulateur CO₂</div>
+        <div class="mag-title">Empreinte carbone numérique</div>
+        <p class="mag-desc">Calcule les tonnes de CO₂ économisées par an en migrant vers Rust. Export PDF avec données auditables pour vos rapports CSRD. Angle Green IT unique sur le marché ESN.</p>
+        <div class="mag-cta">Simuler mon impact <span>→</span></div>
+      </div>
+      <div class="mag-card reveal">
+        <div class="mag-type" style="color:var(--apple-purple)"><div class="mag-dot" style="background:var(--apple-purple)"></div>Rapport PDF</div>
+        <div class="mag-title">Audit sécurité mémoire offert</div>
+        <p class="mag-desc">Checklist de 20 vérifications basée sur les guidelines CISA/NSA juin 2025. Format PDF brandé, généré automatiquement après soumission du formulaire.</p>
+        <div class="mag-cta">Télécharger l'audit <span>→</span></div>
+      </div>
+      <div class="mag-card reveal">
+        <div class="mag-type" style="color:var(--apple-orange)"><div class="mag-dot" style="background:var(--apple-orange)"></div>Newsletter</div>
+        <div class="mag-title">The Rust Report</div>
+        <p class="mag-desc">Veille technique et réglementaire Rust bi-mensuelle : benchmarks, nouvelles crates, actualités NSA/CISA, cas d'usage industrie. Séquence d'onboarding en 5 emails.</p>
+        <div class="mag-cta">S'abonner gratuitement <span>→</span></div>
+      </div>
+      <div class="mag-card reveal">
+        <div class="mag-type" style="color:var(--apple-teal)"><div class="mag-dot" style="background:var(--apple-teal)"></div>Mini-cours</div>
+        <div class="mag-title">5 jours pour comprendre Rust</div>
+        <p class="mag-desc">Email drip de 5 leçons non-techniques pour décideurs DSI/CTO : pourquoi Rust, ce que ça change pour votre infra, les chiffres, les entreprises qui l'ont adopté.</p>
+        <div class="mag-cta">Démarrer la formation <span>→</span></div>
+      </div>
+      <div class="mag-card reveal">
+        <div class="mag-type" style="color:var(--apple-blue-l)"><div class="mag-dot" style="background:var(--apple-blue-l)"></div>Audit live</div>
+        <div class="mag-title">Démo 30 min offerte</div>
+        <p class="mag-desc">Un expert Thrustcode analyse en direct votre architecture et identifie 3 quick wins Rust concrets. Sans engagement. Booking Cal.com intégré. Réponse &lt;4h ouvrées.</p>
+        <div class="mag-cta">Réserver ma démo <span>→</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" id="testimonials">
+  <div class="mesh-wrap">
+    <div class="mesh-orb" style="width:600px;height:400px;background:radial-gradient(circle,rgba(191,90,242,0.06),transparent 70%);top:0;right:-100px;animation:float 20s ease-in-out infinite;"></div>
+  </div>
+  <div class="testimonials-inner">
+    <div class="section-eyebrow reveal">Témoignages</div>
+    <h2 class="section-h reveal">Ce que disent nos <span class="hi">clients.</span></h2>
+    <p class="section-sub reveal">Des équipes tech qui ont franchi le pas et mesurent les résultats.</p>
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="testi-quote">"Thrustcode a réduit notre latence p99 de 2,8s à 47ms en 6 semaines. La méthode est rigoureuse, les résultats sont auditables. C'est exactement ce qu'on cherchait."</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--apple-blue),var(--apple-purple))">JM</div>
+          <div>
+            <div class="testi-name">Jean-Marc Lefebvre</div>
+            <div class="testi-role">CTO · Fintech scale-up · Paris</div>
+          </div>
+          <div class="testi-metric">
+            <div class="testi-m-val">−98%</div>
+            <div class="testi-m-lbl">latence</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-quote">"La migration C++ → Rust a éliminé toute une classe de vulnérabilités mémoire. Le rapport CISA était exactement ce dont nous avions besoin pour notre audit NIS2."</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--apple-purple),var(--apple-teal))">SB</div>
+          <div>
+            <div class="testi-name">Sophie Bernard</div>
+            <div class="testi-role">RSSI · Éditeur logiciel · Lyon</div>
+          </div>
+          <div class="testi-metric">
+            <div class="testi-m-val">−70%</div>
+            <div class="testi-m-lbl">surface CVE</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-quote">"On est passé de 18 à 6 instances EC2. La facture AWS a baissé de 61% le mois suivant. L'équipe Thrustcode a livré dans les délais, avec une doc complète."</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--apple-green),var(--apple-teal))">AR</div>
+          <div>
+            <div class="testi-name">Alexis Renard</div>
+            <div class="testi-role">VP Engineering · SaaS B2B · Bordeaux</div>
+          </div>
+          <div class="testi-metric">
+            <div class="testi-m-val">−61%</div>
+            <div class="testi-m-lbl">coût cloud</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final" id="contact">
+  <div class="mesh-wrap">
+    <div class="mesh-orb" style="width:700px;height:400px;background:radial-gradient(ellipse,rgba(204,75,32,0.12),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+  </div>
+  <div class="final-card reveal">
+    <div class="hero-eyebrow" style="justify-content:center;margin-bottom:1.5rem;opacity:1;animation:none">
+      <span class="eyebrow-dot"></span>Premier atelier offert · Sans engagement
+    </div>
+    <h2 class="final-title">Votre prochain projet<br>en <span style="background:linear-gradient(135deg,var(--apple-blue-l),var(--apple-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rust.</span></h2>
+    <p class="final-sub">Recevez votre audit de performance gratuit en 48h. Nos experts analysent votre stack actuelle et identifient 3 quick wins concrets — mesurés, chiffrés, actionnables.</p>
+    <form id="contact-form" onsubmit="handleContact(event)" novalidate>
+      <div class="form-row">
+        <input type="text" id="f-name" class="email-in" placeholder="Votre nom" required>
+        <input type="text" id="f-company" class="email-in" placeholder="Entreprise">
+      </div>
+      <div class="email-row" style="margin-top:8px;">
+        <input type="email" id="f-email" class="email-in" placeholder="votre@email.com" required>
+      </div>
+      <div class="email-row" style="margin-top:8px;">
+        <textarea id="f-msg" class="email-in contact-textarea" placeholder="Décrivez votre stack et vos enjeux (optionnel)"></textarea>
+      </div>
+      <div style="margin-top:12px;">
+        <button type="submit" class="email-send" id="contact-btn" style="width:100%;padding:0.9rem 1.5rem;font-size:0.95rem;">Obtenir mon audit gratuit →</button>
+      </div>
+      <div id="form-success" class="form-success" style="display:none;">
+        <span style="color:var(--apple-green);font-size:1.3rem;">✓</span>
+        <span>Message reçu ! Nous revenons vers vous dans les 4h ouvrées.</span>
+      </div>
+      <div id="form-error" class="form-error" style="display:none;">
+        Une erreur est survenue. Écrivez-nous directement à <a href="mailto:contact@thrustcode.dev" style="color:var(--apple-blue-l)">contact@thrustcode.dev</a>
+      </div>
+    </form>
+    <p class="final-note" style="margin-top:1rem;">Réponse &lt;4h ouvrées · Sans engagement · 100% confidentiel</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="foot-logo">
+      <a href="#" class="logo">
+        <div class="logo-mark"><svg viewBox="0 0 12 12"><path d="M6 1L11 4v4L6 11 1 8V4z"/></svg></div>
+        thrustcode
+      </a>
+    </div>
+    <p class="foot-desc">ESN spécialisée Rust. Performance extrême, sécurité mémoire, Green IT. Basée à Paris, active à l'international.</p>
+  </div>
+  <div class="foot-col">
+    <h5>Services</h5>
+    <ul class="foot-links">
+      <li><a href="#">Performance</a></li>
+      <li><a href="#">Sécurité</a></li>
+      <li><a href="#">Green IT</a></li>
+      <li><a href="#">Embedded</a></li>
+      <li><a href="#">Refactoring</a></li>
+    </ul>
+  </div>
+  <div class="foot-col">
+    <h5>Ressources</h5>
+    <ul class="foot-links">
+      <li><a href="#">Blog</a></li>
+      <li><a href="#">Academy</a></li>
+      <li><a href="#">Case studies</a></li>
+      <li><a href="#">The Rust Report</a></li>
+    </ul>
+  </div>
+  <div class="foot-col">
+    <h5>Entreprise</h5>
+    <ul class="foot-links">
+      <li><a href="#">À propos</a></li>
+      <li><a href="#">Manifeste</a></li>
+      <li><a href="#">Contact</a></li>
+      <li><a href="#">GitHub</a></li>
+    </ul>
+  </div>
+</footer>
+<div class="foot-bottom">
+  <span class="foot-copy">© 2025 Thrustcode SAS · thrustcode.dev</span>
+  <span class="foot-tech">Built with <span>Rust</span> · Powered by <span>Claude</span></span>
+</div>
+
+<script>
+/* Cursor */
+const cur = document.getElementById('cur');
+const ring = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+(function anim(){
+  rx+=(mx-rx)*.13; ry+=(my-ry)*.13;
+  cur.style.cssText=`left:${mx}px;top:${my}px;`;
+  ring.style.cssText=`left:${rx}px;top:${ry}px;`;
+  requestAnimationFrame(anim);
+})();
+
+/* Scroll reveal */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+/* Contact form */
+async function handleContact(e) {
+  e.preventDefault();
+  const btn = document.getElementById('contact-btn');
+  const success = document.getElementById('form-success');
+  const error = document.getElementById('form-error');
+  success.style.display = 'none';
+  error.style.display = 'none';
+
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const company = document.getElementById('f-company').value.trim();
+  const msg = document.getElementById('f-msg').value.trim();
+
+  if (!name || !email) {
+    document.getElementById('f-name').style.borderColor = name ? '' : 'var(--apple-red)';
+    document.getElementById('f-email').style.borderColor = email ? '' : 'var(--apple-red)';
+    return;
+  }
+
+  btn.textContent = 'Envoi en cours…';
+  btn.disabled = true;
+
+  try {
+    // Simule un envoi — remplacer par un vrai endpoint
+    await new Promise(r => setTimeout(r, 1200));
+    // Idéalement : await fetch('https://api.thrustcode.dev/contact', { method:'POST', body: JSON.stringify({name, email, company, msg}), headers:{'Content-Type':'application/json'} });
+    success.style.display = 'flex';
+    document.getElementById('contact-form').reset();
+  } catch(err) {
+    error.style.display = 'flex';
+  } finally {
+    btn.textContent = 'Obtenir mon audit gratuit →';
+    btn.disabled = false;
+  }
+}
+
+</script>
+</body>
+</html>
