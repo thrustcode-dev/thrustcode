@@ -38,8 +38,8 @@ jobs:
         run: cargo install wasm-bindgen-cli
 
       - name: Build with Trunk
-        # Déploiement sur https://thrustcode-dev.github.io/thrustcode/
-        run: trunk build --release --public-url /thrustcode/
+        # Domaine custom thrustcode.dev → racine /
+        run: trunk build --release --public-url /
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
