@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ThrustCode — ESN specialisee Rust · Performance · Securite · Green IT</title>
+    <meta name="description" content="Thrustcode construit des solutions systeme en Rust — performance extreme, securite memoire by design, empreinte energetique reduite de 98%."/>
+    <meta property="og:title" content="ThrustCode — ESN specialisee Rust"/>
+    <meta property="og:description" content="Performance extreme, securite memoire by design, empreinte energetique reduite de 98%."/>
+    <meta property="og:type" content="website"/>
+    <meta name="twitter:card" content="summary_large_image"/>
+    <!-- Trunk: copy public/ assets to dist/ -->
+    <link data-trunk rel="copy-dir" href="public"/>
+    <link rel="icon" type="image/svg+xml" href="icon.svg"/>
+
+    <!-- Design system + animations -->
+    <link data-trunk rel="css" href="style/main.css"/>
+
+    <!-- Tailwind CDN (utility classes) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <!-- Scroll reveal via IntersectionObserver — observe .reveal elements as they're added by WASM -->
+    <script>
+        (function () {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (e.isIntersecting) e.target.classList.add('visible');
+                });
+            }, { threshold: 0.08 });
+
+            var mo = new MutationObserver(function () {
+                document.querySelectorAll('.reveal:not([data-io])').forEach(function (el) {
+                    el.setAttribute('data-io', '1');
+                    io.observe(el);
+                });
+            });
+            mo.observe(document.documentElement, { childList: true, subtree: true });
+        })();
+    </script>
+</body>
+</html>
