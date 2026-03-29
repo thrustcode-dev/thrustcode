@@ -665,7 +665,7 @@ footer {
     <li><a href="#magnets">Ressources</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
-  <button class="nav-pill">Audit gratuit</button>
+  <a href="mailto:thrustcode@proton.me" class="nav-pill" style="text-decoration:none;">Audit gratuit</a>
 </nav>
 
 <!-- HERO -->
@@ -683,8 +683,8 @@ footer {
   <p class="hero-sub">Thrustcode construit des solutions système en Rust — performance extrême, sécurité mémoire by design, empreinte énergétique réduite de 98%.</p>
 
   <div class="hero-actions">
-    <button class="btn-apple">Démarrer un projet →</button>
-    <button class="btn-glass">Voir notre approche</button>
+    <a href="mailto:thrustcode@proton.me" class="btn-apple" style="text-decoration:none;">Démarrer un projet →</a>
+    <a href="mailto:thrustcode@proton.me" class="btn-glass" style="text-decoration:none;">Voir notre approche</a>
   </div>
 
   <div class="hero-stats">
@@ -948,8 +948,8 @@ footer {
         <div class="p-cta-note">Premier atelier de diagnostic offert · Réponse &lt; 4h ouvrées</div>
       </div>
       <div class="p-cta-right">
-        <button class="btn-glass" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">En savoir plus</button>
-        <button class="btn-apple" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Démarrer le diagnostic →</button>
+        <a href="mailto:thrustcode@proton.me" class="btn-glass" style="text-decoration:none;">En savoir plus</a>
+        <a href="mailto:thrustcode@proton.me" class="btn-apple" style="text-decoration:none;">Démarrer le diagnostic →</a>
       </div>
     </div>
   </div>
@@ -1040,31 +1040,31 @@ footer {
         <div class="mag-type" style="color:var(--apple-green)"><div class="mag-dot" style="background:var(--apple-green)"></div>Simulateur CO₂</div>
         <div class="mag-title">Empreinte carbone numérique</div>
         <p class="mag-desc">Calcule les tonnes de CO₂ économisées par an en migrant vers Rust. Export PDF avec données auditables pour vos rapports CSRD. Angle Green IT unique sur le marché ESN.</p>
-        <div class="mag-cta">Simuler mon impact <span>→</span></div>
+        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Simuler mon impact <span>→</span></a>
       </div>
       <div class="mag-card reveal">
         <div class="mag-type" style="color:var(--apple-purple)"><div class="mag-dot" style="background:var(--apple-purple)"></div>Rapport PDF</div>
         <div class="mag-title">Audit sécurité mémoire offert</div>
         <p class="mag-desc">Checklist de 20 vérifications basée sur les guidelines CISA/NSA juin 2025. Format PDF brandé, généré automatiquement après soumission du formulaire.</p>
-        <div class="mag-cta">Télécharger l'audit <span>→</span></div>
+        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Télécharger l'audit <span>→</span></a>
       </div>
       <div class="mag-card reveal">
         <div class="mag-type" style="color:var(--apple-orange)"><div class="mag-dot" style="background:var(--apple-orange)"></div>Newsletter</div>
         <div class="mag-title">The Rust Report</div>
         <p class="mag-desc">Veille technique et réglementaire Rust bi-mensuelle : benchmarks, nouvelles crates, actualités NSA/CISA, cas d'usage industrie. Séquence d'onboarding en 5 emails.</p>
-        <div class="mag-cta">S'abonner gratuitement <span>→</span></div>
+        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">S'abonner gratuitement <span>→</span></a>
       </div>
       <div class="mag-card reveal">
         <div class="mag-type" style="color:var(--apple-teal)"><div class="mag-dot" style="background:var(--apple-teal)"></div>Mini-cours</div>
         <div class="mag-title">5 jours pour comprendre Rust</div>
         <p class="mag-desc">Email drip de 5 leçons non-techniques pour décideurs DSI/CTO : pourquoi Rust, ce que ça change pour votre infra, les chiffres, les entreprises qui l'ont adopté.</p>
-        <div class="mag-cta">Démarrer la formation <span>→</span></div>
+        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Démarrer la formation <span>→</span></a>
       </div>
       <div class="mag-card reveal">
         <div class="mag-type" style="color:var(--apple-blue-l)"><div class="mag-dot" style="background:var(--apple-blue-l)"></div>Audit live</div>
         <div class="mag-title">Démo 30 min offerte</div>
         <p class="mag-desc">Un expert Thrustcode analyse en direct votre architecture et identifie 3 quick wins Rust concrets. Sans engagement. Booking Cal.com intégré. Réponse &lt;4h ouvrées.</p>
-        <div class="mag-cta">Réserver ma démo <span>→</span></div>
+        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Réserver ma démo <span>→</span></a>
       </div>
     </div>
   </div>
@@ -1138,29 +1138,10 @@ footer {
     </div>
     <h2 class="final-title">Votre prochain projet<br>en <span style="background:linear-gradient(135deg,var(--apple-blue-l),var(--apple-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rust.</span></h2>
     <p class="final-sub">Recevez votre audit de performance gratuit en 48h. Nos experts analysent votre stack actuelle et identifient 3 quick wins concrets — mesurés, chiffrés, actionnables.</p>
-    <form id="contact-form" onsubmit="handleContact(event)" novalidate>
-      <div class="form-row">
-        <input type="text" id="f-name" class="email-in" placeholder="Votre nom" required>
-        <input type="text" id="f-company" class="email-in" placeholder="Entreprise">
-      </div>
-      <div class="email-row" style="margin-top:8px;">
-        <input type="email" id="f-email" class="email-in" placeholder="votre@email.com" required>
-      </div>
-      <div class="email-row" style="margin-top:8px;">
-        <textarea id="f-msg" class="email-in contact-textarea" placeholder="Décrivez votre stack et vos enjeux (optionnel)"></textarea>
-      </div>
-      <div style="margin-top:12px;">
-        <button type="submit" class="email-send" id="contact-btn" style="width:100%;padding:0.9rem 1.5rem;font-size:0.95rem;">Obtenir mon audit gratuit →</button>
-      </div>
-      <div id="form-success" class="form-success" style="display:none;">
-        <span style="color:var(--apple-green);font-size:1.3rem;">✓</span>
-        <span>Message reçu ! Nous revenons vers vous dans les 4h ouvrées.</span>
-      </div>
-      <div id="form-error" class="form-error" style="display:none;">
-        Une erreur est survenue. Écrivez-nous directement à <a href="mailto:contact@thrustcode.dev" style="color:var(--apple-blue-l)">contact@thrustcode.dev</a>
-      </div>
-    </form>
-    <p class="final-note" style="margin-top:1rem;">Réponse &lt;4h ouvrées · Sans engagement · 100% confidentiel</p>
+    <div style="margin-top:2rem;text-align:center;">
+      <a href="mailto:thrustcode@proton.me" class="btn-apple" style="display:inline-block;text-decoration:none;">Obtenir mon audit gratuit →</a>
+    </div>
+    <p class="final-note" style="margin-top:1.5rem;">Réponse &lt;4h ouvrées · Sans engagement · 100% confidentiel</p>
   </div>
 </section>
 
@@ -1226,42 +1207,6 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
-/* Contact form */
-async function handleContact(e) {
-  e.preventDefault();
-  const btn = document.getElementById('contact-btn');
-  const success = document.getElementById('form-success');
-  const error = document.getElementById('form-error');
-  success.style.display = 'none';
-  error.style.display = 'none';
-
-  const name = document.getElementById('f-name').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-  const company = document.getElementById('f-company').value.trim();
-  const msg = document.getElementById('f-msg').value.trim();
-
-  if (!name || !email) {
-    document.getElementById('f-name').style.borderColor = name ? '' : 'var(--apple-red)';
-    document.getElementById('f-email').style.borderColor = email ? '' : 'var(--apple-red)';
-    return;
-  }
-
-  btn.textContent = 'Envoi en cours…';
-  btn.disabled = true;
-
-  try {
-    // Simule un envoi — remplacer par un vrai endpoint
-    await new Promise(r => setTimeout(r, 1200));
-    // Idéalement : await fetch('https://api.thrustcode.dev/contact', { method:'POST', body: JSON.stringify({name, email, company, msg}), headers:{'Content-Type':'application/json'} });
-    success.style.display = 'flex';
-    document.getElementById('contact-form').reset();
-  } catch(err) {
-    error.style.display = 'flex';
-  } finally {
-    btn.textContent = 'Obtenir mon audit gratuit →';
-    btn.disabled = false;
-  }
-}
 
 </script>
 </body>
