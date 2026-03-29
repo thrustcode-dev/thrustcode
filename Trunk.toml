@@ -1,6 +1,10 @@
 [build]
 target = "index.html"
 dist = "dist"
+# Pour build local en simulant le sous-répertoire :
+# trunk build --release --public-url /thrustcode.dev/
+# Pour dev local normal :
+# trunk serve  (pas de public-url nécessaire)
 
 [serve]
 port = 3000
