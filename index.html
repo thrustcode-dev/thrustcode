@@ -1,1213 +1,2873 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thrustcode — Performance · Security · Green IT</title>
-<!-- Open Graph / Social -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://thrustcode.dev/">
-<meta property="og:title" content="Thrustcode — Performance · Security · Green IT">
-<meta property="og:description" content="ESN spécialisée Rust. Migration de goulots, sécurité mémoire, Green IT. Audit de performance gratuit en 48h.">
-<meta property="og:image" content="https://thrustcode.dev/og-image.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Thrustcode — Performance · Security · Green IT">
-<meta name="twitter:description" content="ESN spécialisée Rust. Migration de goulots, sécurité mémoire, Green IT. Audit de performance gratuit en 48h.">
-<meta name="twitter:image" content="https://thrustcode.dev/og-image.png">
-<meta name="description" content="ESN spécialisée Rust. Migration de goulots d'étranglement, sécurité mémoire, Green IT. Premier atelier de diagnostic offert.">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-/* ─── APPLE DESIGN TOKENS ─────────────────────────────────────────── */
-:root {
-  /* Apple system colors */
-  --apple-blue:    #CC4B20;
-  --apple-blue-l:  #E8692A;
-  --apple-blue-d:  #A83918;
-  --apple-green:   #30D158;
-  --apple-orange:  #FF9F0A;
-  --apple-red:     #FF3B30;
-  --apple-purple:  #BF5AF2;
-  --apple-teal:    #5AC8FA;
-
-  /* Backgrounds — deep black like mac pro dark */
-  --bg0: #000000;
-  --bg1: #0A0A0A;
-  --bg2: #111111;
-  --bg3: #161616;
-  --bg4: #1C1C1E;
-
-  /* Text — SF Pro style */
-  --t1: rgba(255,255,255,0.95);
-  --t2: rgba(255,255,255,0.60);
-  --t3: rgba(255,255,255,0.35);
-  --t4: rgba(255,255,255,0.18);
-
-  /* Glass surfaces */
-  --glass-bg:       rgba(255,255,255,0.055);
-  --glass-bg-hover: rgba(255,255,255,0.085);
-  --glass-border:   rgba(255,255,255,0.10);
-  --glass-border-h: rgba(255,255,255,0.20);
-  --glass-blur:     24px;
-
-  /* Typography — SF Pro mimic */
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-
-  /* Radii */
-  --r-sm: 10px;
-  --r-md: 16px;
-  --r-lg: 22px;
-  --r-xl: 30px;
-  --r-full: 999px;
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
-
-body {
-  background: var(--bg0);
-  color: var(--t1);
-  font-family: var(--font);
-  font-size: 17px;
-  line-height: 1.5;
-  overflow-x: hidden;
-  cursor: none;
-}
-
-/* ─── CURSOR ──────────────────────────────────────────────────────── */
-#cur { width:8px;height:8px;background:#fff;border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:transform .1s; }
-#cur-ring { width:40px;height:40px;border:1px solid rgba(255,255,255,0.3);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform .18s ease-out,width .25s,height .25s,border-color .25s; }
-body:has(a:hover) #cur-ring,body:has(button:hover) #cur-ring { width:56px;height:56px;border-color:var(--apple-blue-l); }
-
-/* ─── MESH BACKGROUNDS ────────────────────────────────────────────── */
-.mesh-wrap { position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0; }
-.mesh-orb {
-  position:absolute;
-  border-radius:50%;
-  filter:blur(80px);
-  opacity:0.35;
-}
-
-/* ─── NAV ─────────────────────────────────────────────────────────── */
-nav {
-  position:fixed;top:0;left:0;right:0;z-index:200;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 2.5rem;
-  height:52px;
-  background:rgba(0,0,0,0.72);
-  backdrop-filter:saturate(180%) blur(20px);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);
-  border-bottom:1px solid var(--glass-border);
-  transition:background .3s;
-}
-.logo {
-  font-size:1rem;font-weight:600;color:var(--t1);text-decoration:none;
-  letter-spacing:-0.02em;display:flex;align-items:center;gap:7px;
-}
-.logo-mark {
-  width:22px;height:22px;
-  background:var(--apple-blue);
-  border-radius:6px;
-  display:flex;align-items:center;justify-content:center;
-}
-.logo-mark svg { width:12px;height:12px;fill:#fff; }
-.nav-links { display:flex;gap:0;list-style:none; }
-.nav-links a {
-  font-size:0.8rem;font-weight:400;color:var(--t2);text-decoration:none;
-  padding:0 0.85rem;letter-spacing:-0.01em;transition:color .2s;
-}
-.nav-links a:hover { color:var(--t1); }
-.nav-pill {
-  background:var(--apple-blue);color:#fff;border:none;
-  padding:0.45rem 1.1rem;border-radius:var(--r-full);
-  font-family:var(--font);font-size:0.82rem;font-weight:500;
-  cursor:none;letter-spacing:-0.01em;
-  transition:background .2s,transform .15s;
-}
-.nav-pill:hover { background:var(--apple-blue-l);transform:scale(1.03); }
-
-/* ─── HERO ────────────────────────────────────────────────────────── */
-.hero {
-  min-height:100vh;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:8rem 2rem 6rem;
-  text-align:center;
-  position:relative;
-  overflow:hidden;
-}
-.hero-eyebrow {
-  display:inline-flex;align-items:center;gap:7px;
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  backdrop-filter:blur(var(--glass-blur));
-  border-radius:var(--r-full);
-  padding:0.35rem 1rem;
-  font-size:0.78rem;font-weight:500;color:var(--apple-blue-l);
-  letter-spacing:0.01em;margin-bottom:2rem;
-  opacity:0;animation:fadeUp .7s .2s forwards;
-}
-.eyebrow-dot { width:6px;height:6px;background:var(--apple-blue-l);border-radius:50%;animation:pulse 2s infinite; }
-
-.hero-title {
-  font-size:clamp(3rem,7.5vw,7rem);
-  font-weight:600;
-  letter-spacing:-0.04em;
-  line-height:1.0;
-  max-width:860px;
-  background:linear-gradient(180deg,#fff 40%,rgba(255,255,255,0.45) 100%);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-  opacity:0;animation:fadeUp .8s .35s forwards;
-}
-.hero-sub {
-  font-size:1.1rem;font-weight:300;color:var(--t2);
-  max-width:560px;margin:1.75rem auto 0;line-height:1.65;
-  opacity:0;animation:fadeUp .7s .5s forwards;
-}
-.hero-actions {
-  display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;
-  margin-top:2.5rem;
-  opacity:0;animation:fadeUp .7s .65s forwards;
-}
-.btn-apple {
-  background:var(--apple-blue);color:#fff;border:none;
-  padding:0.8rem 1.75rem;border-radius:var(--r-full);
-  font-family:var(--font);font-size:0.95rem;font-weight:500;
-  cursor:none;letter-spacing:-0.01em;
-  transition:background .2s,transform .15s,box-shadow .2s;
-}
-.btn-apple:hover {
-  background:var(--apple-blue-l);
-  transform:translateY(-2px);
-  box-shadow:0 8px 32px rgba(204,75,32,0.4);
-}
-.btn-glass {
-  background:var(--glass-bg);color:var(--t1);
-  border:1px solid var(--glass-border);
-  padding:0.8rem 1.75rem;border-radius:var(--r-full);
-  font-family:var(--font);font-size:0.95rem;font-weight:400;
-  cursor:none;letter-spacing:-0.01em;
-  backdrop-filter:blur(var(--glass-blur));
-  transition:background .2s,border-color .2s,transform .15s;
-}
-.btn-glass:hover { background:var(--glass-bg-hover);border-color:var(--glass-border-h);transform:translateY(-2px); }
-
-/* Hero stats glass row */
-.hero-stats {
-  display:flex;gap:1px;margin-top:4rem;
-  background:var(--glass-border);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-lg);
-  overflow:hidden;
-  backdrop-filter:blur(var(--glass-blur));
-  opacity:0;animation:fadeUp .7s .8s forwards;
-}
-.stat-cell {
-  flex:1;padding:1.25rem 1.75rem;
-  background:var(--glass-bg);
-  text-align:center;
-  transition:background .2s;
-}
-.stat-cell:hover { background:var(--glass-bg-hover); }
-.stat-n {
-  font-size:2rem;font-weight:600;letter-spacing:-0.04em;
-  background:linear-gradient(135deg,#fff,rgba(255,255,255,0.7));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.stat-n .acc { -webkit-text-fill-color:var(--apple-blue-l); }
-.stat-l { font-size:0.72rem;font-weight:400;color:var(--t3);letter-spacing:0.04em;margin-top:3px;text-transform:uppercase; }
-
-/* ─── TICKER ──────────────────────────────────────────────────────── */
-.ticker-wrap {
-  background:rgba(255,255,255,0.03);
-  border-top:1px solid var(--glass-border);
-  border-bottom:1px solid var(--glass-border);
-  padding:0.8rem 0;overflow:hidden;white-space:nowrap;
-}
-.ticker { display:inline-flex;animation:ticker 32s linear infinite; }
-.t-item {
-  font-size:0.75rem;font-weight:400;color:var(--t3);
-  letter-spacing:0.06em;padding:0 2.5rem;
-  display:inline-flex;align-items:center;gap:1rem;
-}
-.t-dot { width:3px;height:3px;background:var(--apple-blue-l);border-radius:50%;flex-shrink:0; }
-@keyframes ticker { from{transform:translateX(0)}to{transform:translateX(-50%)} }
-
-/* ─── SECTIONS ────────────────────────────────────────────────────── */
-section { position:relative;z-index:1; }
-.section-eyebrow {
-  font-size:0.72rem;font-weight:500;color:var(--apple-blue-l);
-  letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.75rem;
-}
-.section-h {
-  font-size:clamp(2rem,4vw,3.2rem);font-weight:600;
-  letter-spacing:-0.03em;line-height:1.1;
-}
-.section-h .dim { color:var(--t3); }
-.section-h .hi {
-  background:linear-gradient(135deg,var(--apple-blue-l),var(--apple-purple));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.section-sub { font-size:1rem;color:var(--t2);max-width:480px;line-height:1.65;margin-top:0.85rem; }
-
-/* ─── PILLARS ─────────────────────────────────────────────────────── */
-.pillars { padding:6rem 2.5rem;background:var(--bg1); }
-.pillars-inner { max-width:1100px;margin:0 auto; }
-.pillars-grid {
-  display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;
-  margin-top:3.5rem;
-  background:var(--glass-border);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-xl);overflow:hidden;
-}
-.pillar-card {
-  background:var(--glass-bg);
-  backdrop-filter:blur(var(--glass-blur));
-  padding:2.5rem 2rem;
-  position:relative;overflow:hidden;
-  transition:background .3s;
-}
-.pillar-card:hover { background:var(--glass-bg-hover); }
-.pillar-card::after {
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:var(--card-line,var(--apple-blue));
-  opacity:0;transition:opacity .4s;
-}
-.pillar-card:hover::after { opacity:1; }
-.pillar-icon-wrap {
-  width:44px;height:44px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  margin-bottom:1.5rem;font-size:1.3rem;
-}
-.pillar-name {
-  font-size:1.1rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.65rem;
-}
-.pillar-desc { font-size:0.88rem;color:var(--t2);line-height:1.65; }
-.pillar-metric {
-  font-size:0.72rem;color:var(--t3);
-  margin-top:1.5rem;padding-top:1rem;
-  border-top:1px solid var(--glass-border);
-  letter-spacing:0.03em;
-}
-
-/* ─── PROCESS ─────────────────────────────────────────────────────── */
-.process { padding:7rem 2.5rem;background:var(--bg0); }
-.process-inner { max-width:900px;margin:0 auto; }
-.process-steps { margin-top:4rem;display:flex;flex-direction:column;gap:2px; }
-
-.p-step {
-  display:grid;grid-template-columns:56px 1fr;gap:1.5rem;
-  padding:0 0 2.5rem 0;
-  position:relative;
-}
-.p-step::before {
-  content:'';position:absolute;
-  left:27px;top:52px;bottom:0;
-  width:1px;
-  background:linear-gradient(to bottom,var(--glass-border-h),transparent);
-}
-.p-step:last-child::before { display:none; }
-
-.p-num-wrap { display:flex;flex-direction:column;align-items:center;padding-top:2px; }
-.p-num {
-  width:44px;height:44px;border-radius:50%;
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  backdrop-filter:blur(var(--glass-blur));
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.75rem;font-weight:600;color:var(--t2);
-  flex-shrink:0;
-  transition:background .3s,border-color .3s,color .3s;
-}
-.p-step:hover .p-num {
-  background:rgba(0,113,227,0.15);
-  border-color:rgba(204,75,32,0.4);
-  color:var(--apple-blue-l);
-}
-.p-step:last-child .p-num {
-  background:rgba(48,209,88,0.1);
-  border-color:rgba(48,209,88,0.3);
-  color:var(--apple-green);
-}
-
-.p-body { padding-top:8px; }
-.p-tag {
-  display:inline-block;font-size:0.68rem;font-weight:500;
-  padding:2px 10px;border-radius:var(--r-full);
-  margin-bottom:0.6rem;letter-spacing:0.04em;
-}
-.p-dur { font-size:0.72rem;color:var(--t3);margin-left:0.5rem; }
-.p-title { font-size:1.15rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.5rem;line-height:1.2; }
-.p-desc { font-size:0.88rem;color:var(--t2);line-height:1.7;max-width:560px;margin-bottom:1rem; }
-.p-chips { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1.25rem; }
-.chip {
-  font-size:0.72rem;color:var(--t3);
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-full);padding:3px 10px;
-  backdrop-filter:blur(12px);
-}
-.p-visual {
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-md);padding:1rem 1.25rem;
-  backdrop-filter:blur(var(--glass-blur));
-  max-width:520px;
-}
-
-/* code block */
-.code-block { display:flex;flex-direction:column;gap:3px; }
-.cb-comment { font-size:0.72rem;color:var(--t4);font-family:monospace; }
-.cb-line { font-size:0.78rem;color:var(--t2);font-family:monospace; }
-.cb-kw { color:var(--apple-blue-l); }
-.cb-str { color:var(--apple-green); }
-.cb-ok { font-size:0.72rem;color:var(--apple-green);font-family:monospace;margin-top:6px;padding-top:8px;border-top:1px solid var(--glass-border); }
-
-/* bar chart */
-.bars { display:flex;flex-direction:column;gap:9px; }
-.b-row { display:flex;align-items:center;gap:10px; }
-.b-lbl { font-size:0.72rem;color:var(--t2);min-width:88px;font-weight:400; }
-.b-track { flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden; }
-.b-fill { height:100%;border-radius:3px;background:var(--bc); }
-.b-val { font-size:0.72rem;font-weight:500;min-width:54px;text-align:right; }
-
-/* sprint list */
-.sprints { display:flex;flex-direction:column;gap:7px; }
-.spr { display:flex;align-items:center;gap:9px;font-size:0.78rem;color:var(--t2); }
-.spr-dot { width:7px;height:7px;border-radius:50%;flex-shrink:0; }
-.spr-dot.done { background:var(--apple-green); }
-.spr-dot.live { background:var(--apple-blue-l);animation:pulse 1.5s infinite; }
-.spr-dot.wait { background:rgba(255,255,255,0.15); }
-.spr-badge { margin-left:auto;font-size:0.65rem;padding:2px 8px;border-radius:var(--r-full); }
-.sb-done { background:rgba(48,209,88,0.1);color:var(--apple-green); }
-.sb-live { background:rgba(232,105,42,0.1);color:var(--apple-blue-l); }
-.sb-wait { background:rgba(255,255,255,0.05);color:var(--t3); }
-
-/* before/after metrics */
-.ba-wrap { display:flex;gap:1.5rem; }
-.ba-pair { display:flex;align-items:center;gap:0.75rem; }
-.ba-col { display:flex;flex-direction:column;gap:2px; }
-.ba-lbl { font-size:0.62rem;color:var(--t3);letter-spacing:0.06em; }
-.ba-val { font-size:0.95rem;font-weight:600;letter-spacing:-0.02em; }
-.ba-val.before { color:var(--t3);text-decoration:line-through;text-decoration-color:rgba(255,59,48,0.5); }
-.ba-val.after { color:var(--apple-green); }
-.ba-arrow { color:var(--t3);font-size:0.9rem; }
-.ba-sub { font-size:0.62rem;color:var(--t4); }
-
-/* outcomes */
-.outcomes { display:flex;flex-direction:column;gap:7px; }
-.oc { display:flex;align-items:center;gap:10px;font-size:0.82rem;color:var(--t2); }
-.oc-icon {
-  width:22px;height:22px;border-radius:6px;
-  display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
-}
-
-/* process CTA */
-.p-cta {
-  margin-top:3.5rem;padding:2rem 2.5rem;
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-xl);
-  backdrop-filter:blur(var(--glass-blur));
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
-}
-.p-cta-text { font-size:1.15rem;font-weight:600;letter-spacing:-0.02em; }
-.p-cta-note { font-size:0.78rem;color:var(--t3); }
-.p-cta-right { display:flex;align-items:center;gap:1rem; }
-
-/* ─── SERVICES ────────────────────────────────────────────────────── */
-.services { padding:6rem 2.5rem;background:var(--bg1); }
-.services-inner { max-width:1100px;margin:0 auto; }
-.svc-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:3.5rem; }
-.svc-card {
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-lg);padding:1.75rem;
-  backdrop-filter:blur(var(--glass-blur));
-  transition:background .25s,border-color .25s,transform .2s;
-  position:relative;overflow:hidden;
-}
-.svc-card:hover {
-  background:var(--glass-bg-hover);
-  border-color:var(--glass-border-h);
-  transform:translateY(-4px);
-}
-.svc-card::before {
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(circle at 0% 0%,rgba(204,75,32,0.08),transparent 60%);
-  opacity:0;transition:opacity .3s;
-  pointer-events:none;
-}
-.svc-card:hover::before { opacity:1; }
-.svc-cat {
-  font-size:0.7rem;font-weight:500;color:var(--t3);
-  letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.6rem;
-}
-.svc-name { font-size:1rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.5rem;line-height:1.3; }
-.svc-desc { font-size:0.83rem;color:var(--t2);line-height:1.6;margin-bottom:1rem; }
-.svc-kpi {
-  font-size:0.72rem;color:var(--t3);
-  padding-top:0.85rem;
-  border-top:1px solid var(--glass-border);
-  letter-spacing:0.02em;
-}
-.new-tag {
-  display:inline-block;font-size:0.65rem;font-weight:500;
-  background:rgba(232,105,42,0.12);color:var(--apple-blue-l);
-  border:1px solid rgba(232,105,42,0.25);
-  border-radius:var(--r-full);padding:2px 8px;margin-left:7px;
-  letter-spacing:0.04em;vertical-align:middle;
-}
-
-/* ─── LEAD MAGNETS ────────────────────────────────────────────────── */
-.magnets { padding:6rem 2.5rem;background:var(--bg0); }
-.magnets-inner { max-width:1100px;margin:0 auto; }
-.mag-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:3.5rem; }
-.mag-card {
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-lg);
-  padding:1.75rem;
-  backdrop-filter:blur(var(--glass-blur));
-  display:flex;flex-direction:column;
-  transition:background .25s,border-color .25s,transform .2s;
-  position:relative;overflow:hidden;
-}
-.mag-card:hover {
-  background:var(--glass-bg-hover);
-  border-color:var(--glass-border-h);
-  transform:translateY(-4px);
-}
-.mag-type {
-  font-size:0.7rem;font-weight:500;letter-spacing:0.1em;
-  text-transform:uppercase;margin-bottom:0.75rem;
-  display:flex;align-items:center;gap:6px;
-}
-.mag-dot { width:5px;height:5px;border-radius:50%;flex-shrink:0; }
-.mag-title { font-size:1rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:0.5rem;line-height:1.3; }
-.mag-desc { font-size:0.83rem;color:var(--t2);line-height:1.6;flex:1; }
-.mag-cta {
-  font-size:0.8rem;color:var(--apple-blue-l);
-  margin-top:1.25rem;padding-top:0.85rem;
-  border-top:1px solid var(--glass-border);
-  display:flex;align-items:center;gap:5px;
-  transition:gap .2s;
-}
-.mag-card:hover .mag-cta { gap:8px; }
-
-/* ─── FINAL CTA ───────────────────────────────────────────────────── */
-.final { padding:9rem 2.5rem;background:var(--bg1);text-align:center;position:relative;overflow:hidden; }
-.final-card {
-  max-width:640px;margin:0 auto;
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-xl);
-  padding:3.5rem 3rem;
-  backdrop-filter:blur(var(--glass-blur));
-  position:relative;z-index:1;
-}
-.final-title { font-size:clamp(2rem,4.5vw,3rem);font-weight:600;letter-spacing:-0.04em;line-height:1.05;margin-bottom:1rem; }
-.final-sub { font-size:0.95rem;color:var(--t2);line-height:1.65;margin-bottom:2rem; }
-.email-row { display:flex;gap:8px;margin-bottom:0.75rem; }
-.email-in {
-  flex:1;background:rgba(255,255,255,0.06);
-  border:1px solid var(--glass-border);
-  color:var(--t1);padding:0.8rem 1rem;
-  border-radius:var(--r-full);font-family:var(--font);font-size:0.9rem;
-  outline:none;transition:border-color .2s,background .2s;
-}
-.email-in::placeholder { color:var(--t3); }
-.email-in:focus { border-color:rgba(0,113,227,0.5);background:rgba(204,75,32,0.06); }
-.email-send {
-  background:var(--apple-blue);color:#fff;border:none;
-  padding:0.8rem 1.5rem;border-radius:var(--r-full);
-  font-family:var(--font);font-size:0.85rem;font-weight:500;
-  cursor:none;white-space:nowrap;
-  transition:background .2s,box-shadow .2s;
-}
-.email-send:hover { background:var(--apple-blue-l);box-shadow:0 4px 20px rgba(204,75,32,0.4); }
-.final-note { font-size:0.72rem;color:var(--t3);letter-spacing:0.03em; }
-
-/* ─── FOOTER ──────────────────────────────────────────────────────── */
-footer {
-  background:var(--bg0);
-  border-top:1px solid var(--glass-border);
-  padding:3rem 2.5rem 1.5rem;
-  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;
-  max-width:none;
-}
-.foot-logo { margin-bottom:0.75rem; }
-.foot-desc { font-size:0.83rem;color:var(--t3);line-height:1.6;max-width:240px; }
-.foot-col h5 { font-size:0.72rem;font-weight:500;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.85rem; }
-.foot-links { list-style:none;display:flex;flex-direction:column;gap:0.5rem; }
-.foot-links a { font-size:0.85rem;color:var(--t2);text-decoration:none;transition:color .2s; }
-.foot-links a:hover { color:var(--t1); }
-.foot-bottom {
-  background:var(--bg0);border-top:1px solid var(--glass-border);
-  padding:1.25rem 2.5rem;
-  display:flex;justify-content:space-between;align-items:center;
-}
-.foot-copy,.foot-tech { font-size:0.72rem;color:var(--t3);letter-spacing:0.04em; }
-.foot-tech span { color:var(--apple-blue-l); }
-
-/* ─── REVEAL ──────────────────────────────────────────────────────── */
-.reveal { opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease; }
-.reveal.visible { opacity:1;transform:translateY(0); }
-
-/* ─── KEYFRAMES ───────────────────────────────────────────────────── */
-@keyframes fadeUp { from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)} }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)} }
-@keyframes float {
-  0%,100%{transform:translate(0,0)}
-  33%{transform:translate(30px,-20px)}
-  66%{transform:translate(-20px,25px)}
-}
-
-/* ─── SCROLLBAR ───────────────────────────────────────────────────── */
-::-webkit-scrollbar { width:5px; }
-::-webkit-scrollbar-track { background:var(--bg0); }
-::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1);border-radius:3px; }
-::selection { background:rgba(0,113,227,0.3); }
-
-/* ─── TESTIMONIALS ────────────────────────────────────────────────── */
-.testimonials { padding:6rem 2.5rem;background:var(--bg0); }
-.testimonials-inner { max-width:1100px;margin:0 auto; }
-.testi-grid {
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:3.5rem;
-}
-.testi-card {
-  background:var(--glass-bg);
-  border:1px solid var(--glass-border);
-  border-radius:var(--r-lg);padding:2rem;
-  backdrop-filter:blur(var(--glass-blur));
-  transition:background .25s,border-color .25s,transform .2s;
-  display:flex;flex-direction:column;gap:1.5rem;
-}
-.testi-card:hover {
-  background:var(--glass-bg-hover);
-  border-color:var(--glass-border-h);
-  transform:translateY(-4px);
-}
-.testi-quote {
-  font-size:0.9rem;color:var(--t2);line-height:1.7;
-  font-style:italic;
-  position:relative;padding-left:1rem;
-  border-left:2px solid var(--apple-blue-l);
-}
-.testi-author {
-  display:flex;align-items:center;gap:0.85rem;
-}
-.testi-avatar {
-  width:38px;height:38px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.75rem;font-weight:600;color:#fff;flex-shrink:0;
-}
-.testi-name { font-size:0.88rem;font-weight:600;letter-spacing:-0.01em; }
-.testi-role { font-size:0.72rem;color:var(--t3);margin-top:2px; }
-.testi-metric {
-  margin-left:auto;text-align:center;flex-shrink:0;
-}
-.testi-m-val {
-  font-size:1.3rem;font-weight:600;letter-spacing:-0.03em;
-  background:linear-gradient(135deg,var(--apple-blue-l),var(--apple-green));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.testi-m-lbl { font-size:0.62rem;color:var(--t3);letter-spacing:0.06em;text-transform:uppercase; }
-
-/* ─── FORM AMÉLIORÉ ───────────────────────────────────────────────── */
-.form-row { display:flex;gap:8px;margin-bottom:0px; }
-.contact-textarea {
-  width:100%;min-height:90px;resize:vertical;border-radius:var(--r-md) !important;
-  padding:0.8rem 1rem !important;font-family:var(--font);line-height:1.5;
-}
-.form-success, .form-error {
-  margin-top:12px;padding:0.85rem 1rem;
-  border-radius:var(--r-md);
-  display:flex;align-items:center;gap:10px;
-  font-size:0.85rem;
-}
-.form-success { background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);color:var(--t2); }
-.form-error { background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.2);color:var(--t2); }
-
-/* ─── MOBILE ──────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  nav { padding:0 1.2rem; }
-  .nav-links { display:none; }
-  .pillars-grid { grid-template-columns:1fr; }
-  .testi-grid { grid-template-columns:1fr; }
-  footer { grid-template-columns:1fr 1fr;gap:2rem; }
-  .form-row { flex-direction:column; }
-  .hero-stats { flex-direction:column; }
-  .stat-cell { padding:1rem; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thrustcode - ESN spécialisée Rust | Performance, Sécurité, Green IT</title>
+  <meta name="description" content="Thrustcode construit des solutions système en Rust — performance extrême, sécurité mémoire by design, empreinte énergétique réduite de 98%. Paris & Worldwide.">
+  <meta name="keywords" content="Rust, ESN, performance, sécurité mémoire, Green IT, migration, consulting, Paris">
+  <meta name="author" content="Thrustcode">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://thrustcode.dev">
+  <meta property="og:title" content="Thrustcode - ESN spécialisée Rust">
+  <meta property="og:description" content="Performance extrême, sécurité mémoire by design, empreinte énergétique réduite de 98%.">
+  <meta property="og:image" content="https://thrustcode.dev/og-image.png">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Thrustcode - ESN spécialisée Rust">
+  <meta name="twitter:description" content="Performance extrême, sécurité mémoire by design, empreinte énergétique réduite de 98%.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='32' height='32' rx='8' fill='%23CC4B20'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' fill='white' font-family='system-ui' font-weight='bold' font-size='18'%3ET%3C/text%3E%3C/svg%3E">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "Thrustcode",
+    "description": "ESN spécialisée Rust. Migration de goulots d'étranglement, sécurité mémoire, Green IT.",
+    "url": "https://thrustcode.dev",
+    "email": "thrustcode@proton.me",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Paris",
+      "addressCountry": "FR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": "48.8566",
+      "longitude": "2.3522"
+    },
+    "areaServed": ["France", "Europe"],
+    "serviceType": ["Développement Rust", "Migration de code", "Audit de performance", "Sécurité mémoire", "Green IT"],
+    "priceRange": "€€€"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Pourquoi migrer vers Rust ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Rust offre des performances proches du C/C++ avec une sécurité mémoire garantie à la compilation. Cela élimine les bugs de mémoire tout en réduisant la consommation énergétique de 50% en moyenne."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Combien de temps dure une migration Rust ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Une migration typique prend entre 2 et 6 mois selon la complexité du code existant. Nous commençons par les goulots d'étranglement pour un ROI rapide."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "L'audit de performance est-il vraiment gratuit ?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Oui, notre audit initial de 48h est entièrement gratuit et sans engagement."
+        }
+      }
+    ]
+  }
+  </script>
+  
+  <style>
+    /* =====================================================
+       CSS VARIABLES & RESET
+       ===================================================== */
+    :root {
+      --apple-blue: #CC4B20;
+      --apple-blue-l: #E8692A;
+      --apple-blue-d: #A83918;
+      --apple-green: #30D158;
+      --apple-orange: #FF9F0A;
+      --apple-red: #FF3B30;
+      --apple-purple: #BF5AF2;
+      --apple-teal: #5AC8FA;
+      
+      --bg0: #000000;
+      --bg1: #0A0A0A;
+      --bg2: #111111;
+      --bg3: #161616;
+      --bg4: #1C1C1E;
+      
+      --t1: rgba(255,255,255,0.95);
+      --t2: rgba(255,255,255,0.60);
+      --t3: rgba(255,255,255,0.35);
+      --t4: rgba(255,255,255,0.18);
+      
+      --glass-bg: rgba(255,255,255,0.035);
+      --glass-bg-hover: rgba(255,255,255,0.065);
+      --glass-bg-active: rgba(255,255,255,0.085);
+      --glass-border: rgba(255,255,255,0.08);
+      --glass-border-h: rgba(255,255,255,0.15);
+      --glass-blur: 40px;
+      --glass-saturate: 180%;
+      
+      --vibrancy-light: rgba(255,255,255,0.12);
+      
+      --r-sm: 10px;
+      --r-md: 16px;
+      --r-lg: 22px;
+      --r-xl: 30px;
+      --r-2xl: 44px;
+      --r-full: 999px;
+      
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      background: var(--bg0);
+      color: var(--t1);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      font-size: 17px;
+      line-height: 1.5;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    a { text-decoration: none; color: inherit; }
+    ul, ol { list-style: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+    ::selection { background: rgba(204,75,32,0.35); }
+    
+    /* =====================================================
+       ANIMATIONS
+       ===================================================== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translate3d(0, 24px, 0); }
+      to { opacity: 1; transform: translate3d(0, 0, 0); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.5); }
+    }
+    
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; box-shadow: 0 0 0 0 rgba(204, 75, 32, 0.4); }
+      50% { opacity: 1; box-shadow: 0 0 20px 4px rgba(204, 75, 32, 0.2); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      25% { transform: translate3d(20px, -15px, 0) scale(1.02); }
+      50% { transform: translate3d(-10px, -25px, 0) scale(0.98); }
+      75% { transform: translate3d(-25px, -10px, 0) scale(1.01); }
+    }
+    
+    @keyframes floatSlow {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+      33% { transform: translate3d(40px, -30px, 0) rotate(2deg); }
+      66% { transform: translate3d(-30px, 40px, 0) rotate(-2deg); }
+    }
+    
+    @keyframes ticker {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(-50%, 0, 0); }
+    }
+    
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+    
+    .animate-fadeUp {
+      animation: fadeUp 0.8s var(--ease-out-expo) forwards;
+    }
+    
+    .animate-pulse-dot {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .animate-pulse-glow {
+      animation: pulseGlow 2.5s ease-in-out infinite;
+    }
+    
+    .animate-float {
+      animation: float 20s ease-in-out infinite;
+    }
+    
+    .animate-float-slow {
+      animation: floatSlow 30s ease-in-out infinite;
+    }
+    
+    .animate-float-reverse {
+      animation: float 25s ease-in-out infinite reverse;
+    }
+    
+    .animate-ticker {
+      animation: ticker 35s linear infinite;
+    }
+    
+    .animate-breathe {
+      animation: breathe 4s ease-in-out infinite;
+    }
+    
+    /* Reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translate3d(0, 28px, 0);
+      transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+    }
+    
+    .reveal.visible {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+    
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    
+    /* =====================================================
+       GLASS SYSTEM
+       ===================================================== */
+    .glass {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      transition: all 0.3s var(--ease-out-quint);
+    }
+    
+    .glass:hover {
+      background: var(--glass-bg-hover);
+      border-color: var(--glass-border-h);
+    }
+    
+    .glass-elevated {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 var(--vibrancy-light);
+      transition: all 0.4s var(--ease-out-expo);
+    }
+    
+    .glass-elevated:hover {
+      background: var(--glass-bg-hover);
+      border-color: var(--glass-border-h);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--vibrancy-light);
+    }
+    
+    .glass-ultra {
+      background: rgba(10, 10, 10, 0.75);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(60px) saturate(200%);
+      -webkit-backdrop-filter: blur(60px) saturate(200%);
+    }
+    
+    .glass-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px) saturate(150%);
+      -webkit-backdrop-filter: blur(24px) saturate(150%);
+      border-radius: var(--r-lg);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s var(--ease-out-expo);
+    }
+    
+    .glass-card:hover {
+      background: var(--glass-bg-hover);
+      border-color: var(--glass-border-h);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 var(--vibrancy-light);
+    }
+    
+    .glass-button {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      transition: all 0.25s var(--ease-out-quint);
+    }
+    
+    .glass-button:hover {
+      background: var(--glass-bg-hover);
+      border-color: var(--glass-border-h);
+      transform: translateY(-2px);
+    }
+    
+    /* Buttons */
+    .btn-primary {
+      background: var(--apple-blue);
+      color: white;
+      border: none;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s var(--ease-out-quint);
+    }
+    
+    .btn-primary:hover {
+      background: var(--apple-blue-l);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(204, 75, 32, 0.45), 0 2px 8px rgba(204, 75, 32, 0.3);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0) scale(0.98);
+    }
+    
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.85) 40%, rgba(255,255,255,0.5) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .gradient-text-accent {
+      background: linear-gradient(135deg, var(--apple-blue-l) 0%, var(--apple-purple) 50%, var(--apple-teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* Mesh orbs */
+    .mesh-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    
+    .mesh-orb-orange {
+      background: radial-gradient(circle, rgba(204, 75, 32, 0.25) 0%, rgba(204, 75, 32, 0.1) 40%, transparent 70%);
+    }
+    
+    .mesh-orb-purple {
+      background: radial-gradient(circle, rgba(191, 90, 242, 0.15) 0%, rgba(191, 90, 242, 0.05) 40%, transparent 70%);
+    }
+    
+    .mesh-orb-green {
+      background: radial-gradient(circle, rgba(48, 209, 88, 0.12) 0%, rgba(48, 209, 88, 0.04) 40%, transparent 70%);
+    }
+    
+    .mesh-orb-blue {
+      background: radial-gradient(circle, rgba(0, 113, 227, 0.2) 0%, rgba(0, 113, 227, 0.08) 40%, transparent 70%);
+    }
+    
+    /* =====================================================
+       LAYOUT UTILITIES
+       ===================================================== */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+    
+    .section {
+      padding: 112px 40px;
+      position: relative;
+    }
+    
+    .section-alt {
+      background: var(--bg1);
+    }
+    
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-center { justify-content: center; }
+    .justify-between { justify-content: space-between; }
+    .flex-wrap { flex-wrap: wrap; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .gap-6 { gap: 24px; }
+    .gap-8 { gap: 32px; }
+    
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    
+    @media (min-width: 768px) {
+      .md\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .md\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+      .md\\:flex-row { flex-direction: row; }
+    }
+    
+    @media (min-width: 1024px) {
+      .lg\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+      .lg\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+    
+    .text-center { text-align: center; }
+    .font-mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+    
+    /* =====================================================
+       NAVBAR
+       ===================================================== */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      height: 56px;
+      transition: all 0.5s var(--ease-out-expo);
+      background: transparent;
+      border-bottom: 1px solid transparent;
+    }
+    
+    .navbar.scrolled {
+      background: rgba(10, 10, 10, 0.75);
+      backdrop-filter: blur(60px) saturate(200%);
+      -webkit-backdrop-filter: blur(60px) saturate(200%);
+      border-bottom-color: var(--glass-border);
+    }
+    
+    .navbar-logo {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--t1);
+      transition: opacity 0.2s;
+    }
+    
+    .navbar-logo:hover {
+      opacity: 0.7;
+    }
+    
+    .navbar-links {
+      display: none;
+      gap: 4px;
+    }
+    
+    @media (min-width: 768px) {
+      .navbar-links {
+        display: flex;
+      }
+    }
+    
+    .navbar-link {
+      font-size: 0.82rem;
+      color: var(--t2);
+      padding: 8px 16px;
+      border-radius: 999px;
+      letter-spacing: -0.01em;
+      transition: all 0.2s;
+    }
+    
+    .navbar-link:hover {
+      color: var(--t1);
+      background: rgba(255,255,255,0.05);
+    }
+    
+    .navbar-cta {
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-weight: 500;
+      font-size: 0.82rem;
+      letter-spacing: -0.01em;
+    }
+    
+    .mobile-menu-btn {
+      display: flex;
+      padding: 8px;
+      border-radius: 8px;
+      color: var(--t1);
+      transition: background 0.2s;
+    }
+    
+    .mobile-menu-btn:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    
+    @media (min-width: 768px) {
+      .mobile-menu-btn {
+        display: none;
+      }
+    }
+    
+    .mobile-menu {
+      position: absolute;
+      top: 56px;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(60px);
+      -webkit-backdrop-filter: blur(60px);
+      border-bottom: 1px solid var(--glass-border);
+      opacity: 0;
+      transform: translateY(-16px);
+      pointer-events: none;
+      transition: all 0.4s var(--ease-out-expo);
+    }
+    
+    .mobile-menu.open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    
+    .mobile-menu-link {
+      display: block;
+      padding: 14px 24px;
+      color: var(--t2);
+      transition: all 0.2s;
+    }
+    
+    .mobile-menu-link:hover {
+      color: var(--t1);
+      background: rgba(255,255,255,0.03);
+    }
+    
+    @media (min-width: 768px) {
+      .mobile-menu {
+        display: none;
+      }
+    }
+    
+    /* =====================================================
+       HERO
+       ===================================================== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 128px 32px 96px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 20px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--apple-blue-l);
+      letter-spacing: 0.01em;
+      margin-bottom: 32px;
+    }
+    
+    .hero-badge-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--apple-blue-l);
+      border-radius: 50%;
+    }
+    
+    .hero-title {
+      font-size: clamp(2.8rem, 7vw, 6.5rem);
+      font-weight: 600;
+      letter-spacing: -0.045em;
+      line-height: 1.0;
+      max-width: 900px;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.15rem;
+      font-weight: 300;
+      color: var(--t2);
+      max-width: 580px;
+      margin-top: 32px;
+      line-height: 1.7;
+    }
+    
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 44px;
+    }
+    
+    .hero-btn {
+      padding: 14px 32px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    
+    .hero-btn-secondary {
+      color: var(--t1);
+    }
+    
+    .hero-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      margin-top: 64px;
+      border-radius: var(--r-xl);
+      overflow: hidden;
+    }
+    
+    @media (min-width: 768px) {
+      .hero-stats {
+        flex-direction: row;
+      }
+    }
+    
+    .hero-stat {
+      flex: 1;
+      padding: 24px 32px;
+      background: var(--glass-bg);
+      text-align: center;
+      min-width: 150px;
+      transition: background 0.2s;
+    }
+    
+    .hero-stat:hover {
+      background: var(--glass-bg-hover);
+    }
+    
+    .hero-stat-value {
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: -0.04em;
+    }
+    
+    .hero-stat-accent {
+      color: var(--apple-blue-l);
+    }
+    
+    .hero-stat-label {
+      font-size: 0.72rem;
+      color: var(--t3);
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+    
+    /* =====================================================
+       TICKER
+       ===================================================== */
+    .ticker {
+      background: rgba(255,255,255,0.03);
+      border-top: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 12px 0;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    
+    .ticker-inner {
+      display: inline-flex;
+    }
+    
+    .ticker-item {
+      font-size: 0.75rem;
+      color: var(--t3);
+      letter-spacing: 0.06em;
+      padding: 0 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .ticker-dot {
+      width: 3px;
+      height: 3px;
+      background: var(--apple-blue-l);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    /* =====================================================
+       CLIENT LOGOS
+       ===================================================== */
+    .clients {
+      padding: 32px 0 48px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .clients-label {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--t3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 24px;
+    }
+    
+    .clients-grid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+    
+    @media (min-width: 768px) {
+      .clients-grid {
+        gap: 48px;
+      }
+    }
+    
+    .client-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+    
+    .client-item:hover {
+      opacity: 1;
+    }
+    
+    .client-logo {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      border-radius: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--t2);
+      letter-spacing: -0.02em;
+    }
+    
+    @media (min-width: 768px) {
+      .client-logo {
+        height: 40px;
+        font-size: 1rem;
+      }
+    }
+    
+    .client-industry {
+      font-size: 0.65rem;
+      color: var(--t4);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .client-item:hover .client-industry {
+      opacity: 1;
+    }
+    
+    .clients-stats {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--glass-border);
+    }
+    
+    @media (min-width: 768px) {
+      .clients-stats {
+        gap: 64px;
+      }
+    }
+    
+    .clients-stat {
+      text-align: center;
+    }
+    
+    .clients-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--t1);
+    }
+    
+    @media (min-width: 768px) {
+      .clients-stat-value {
+        font-size: 1.875rem;
+      }
+    }
+    
+    .clients-stat-value-accent {
+      color: var(--apple-blue-l);
+    }
+    
+    .clients-stat-label {
+      font-size: 0.75rem;
+      color: var(--t3);
+    }
+    
+    /* =====================================================
+       PILLARS
+       ===================================================== */
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 56px;
+    }
+    
+    @media (min-width: 768px) {
+      .pillars-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    .pillar-card {
+      padding: 40px;
+      padding-bottom: 36px;
+      position: relative;
+    }
+    
+    .pillar-accent {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    
+    .pillar-card:hover .pillar-accent {
+      opacity: 1;
+    }
+    
+    .pillar-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      transition: transform 0.3s;
+    }
+    
+    .pillar-card:hover .pillar-icon {
+      transform: scale(1.1);
+    }
+    
+    .pillar-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+    
+    .pillar-desc {
+      font-size: 0.88rem;
+      color: var(--t2);
+      line-height: 1.7;
+    }
+    
+    .pillar-metric {
+      font-size: 0.73rem;
+      color: var(--t3);
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--glass-border);
+      letter-spacing: 0.02em;
+    }
+    
+    /* =====================================================
+       PROCESS
+       ===================================================== */
+    .process-step {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 24px;
+      padding-bottom: 40px;
+      position: relative;
+    }
+    
+    .process-line {
+      position: absolute;
+      left: 27px;
+      top: 52px;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--glass-border-h), transparent);
+    }
+    
+    .process-num {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--t2);
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+    
+    .process-step:hover .process-num {
+      background: rgba(204,75,32,0.15);
+      border-color: rgba(204,75,32,0.4);
+      color: var(--apple-blue-l);
+    }
+    
+    .process-num-last {
+      background: rgba(48,209,88,0.1);
+      border-color: rgba(48,209,88,0.3);
+      color: var(--apple-green);
+    }
+    
+    .process-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+    
+    .process-duration {
+      font-size: 0.72rem;
+      color: var(--t3);
+      margin-left: 8px;
+    }
+    
+    .process-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    
+    .process-desc {
+      font-size: 0.88rem;
+      color: var(--t2);
+      line-height: 1.7;
+      max-width: 560px;
+      margin-bottom: 16px;
+    }
+    
+    .process-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    
+    .process-chip {
+      font-size: 0.72rem;
+      color: var(--t3);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+    
+    .process-visual {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--r-md);
+      padding: 16px 20px;
+      max-width: 520px;
+    }
+    
+    .process-cta {
+      margin-top: 56px;
+      padding: 32px 40px;
+      border-radius: var(--r-xl);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    
+    .process-cta-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    
+    .process-cta-sub {
+      font-size: 0.78rem;
+      color: var(--t3);
+    }
+    
+    .process-cta-btns {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .process-cta-btn {
+      padding: 13px 28px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      transition: all 0.3s var(--ease-out-quint);
+    }
+    
+    .process-cta-btn-secondary {
+      background: var(--glass-bg);
+      color: var(--t1);
+      border: 1px solid var(--glass-border);
+    }
+    
+    .process-cta-btn-secondary:hover {
+      background: var(--glass-bg-hover);
+      border-color: var(--glass-border-h);
+      transform: translateY(-2px);
+    }
+    
+    .process-cta-btn-primary {
+      font-weight: 500;
+    }
+    
+    .process-cta-btn-primary:hover {
+      box-shadow: 0 8px 32px rgba(204, 75, 32, 0.4);
+    }
+    
+    /* =====================================================
+       SERVICES
+       ===================================================== */
+    .services-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 56px;
+    }
+    
+    @media (min-width: 768px) {
+      .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .services-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    .service-card {
+      padding: 28px;
+    }
+    
+    .service-category {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    
+    .service-name {
+      font-size: 1.02rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    
+    .service-badge {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      background: rgba(232,105,42,0.15);
+      color: var(--apple-blue-l);
+      border: 1px solid rgba(232,105,42,0.3);
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin-left: 8px;
+      vertical-align: middle;
+      letter-spacing: 0.04em;
+    }
+    
+    .service-desc {
+      font-size: 0.84rem;
+      color: var(--t2);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    
+    .service-kpi {
+      font-size: 0.72rem;
+      color: var(--t3);
+      padding-top: 16px;
+      border-top: 1px solid var(--glass-border);
+      letter-spacing: 0.02em;
+    }
+    
+    /* =====================================================
+       LEAD MAGNETS
+       ===================================================== */
+    .magnets-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 56px;
+    }
+    
+    @media (min-width: 768px) {
+      .magnets-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .magnets-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    .magnet-card {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .magnet-type {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .magnet-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .magnet-title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    
+    .magnet-desc {
+      font-size: 0.83rem;
+      color: var(--t2);
+      line-height: 1.6;
+      flex: 1;
+    }
+    
+    .magnet-cta {
+      font-size: 0.8rem;
+      color: var(--apple-blue-l);
+      margin-top: 20px;
+      padding-top: 14px;
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: gap 0.3s;
+      cursor: pointer;
+    }
+    
+    .magnet-card:hover .magnet-cta {
+      gap: 8px;
+    }
+    
+    /* =====================================================
+       TESTIMONIALS
+       ===================================================== */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 56px;
+    }
+    
+    @media (min-width: 768px) {
+      .testimonials-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .testimonials-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    .testimonial-card {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    .testimonial-quote {
+      font-size: 0.9rem;
+      color: var(--t2);
+      line-height: 1.7;
+      font-style: italic;
+      position: relative;
+      padding-left: 16px;
+      border-left: 2px solid var(--apple-blue-l);
+    }
+    
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    
+    .testimonial-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
+    
+    .testimonial-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    
+    .testimonial-role {
+      font-size: 0.72rem;
+      color: var(--t3);
+      margin-top: 2px;
+    }
+    
+    .testimonial-metric {
+      margin-left: auto;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    .testimonial-metric-value {
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+    }
+    
+    .testimonial-metric-label {
+      font-size: 0.62rem;
+      color: var(--t3);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    
+    /* =====================================================
+       FAQ
+       ===================================================== */
+    .faq-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .faq-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    
+    .faq-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--apple-blue-l);
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+    
+    .faq-title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+    
+    .faq-subtitle {
+      color: var(--t2);
+      font-size: 1rem;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .faq-item {
+      border-radius: var(--r-lg);
+      overflow: hidden;
+      transition: border-color 0.4s var(--ease-out-expo);
+    }
+    
+    .faq-item.open {
+      border-color: var(--glass-border-h);
+    }
+    
+    .faq-question {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      text-align: left;
+      gap: 16px;
+      color: var(--t1);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: color 0.3s;
+    }
+    
+    @media (min-width: 768px) {
+      .faq-question {
+        font-size: 1.05rem;
+      }
+    }
+    
+    .faq-question:hover {
+      color: var(--apple-blue-l);
+    }
+    
+    .faq-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.4s var(--ease-out-expo);
+    }
+    
+    .faq-item.open .faq-icon {
+      background: rgba(204,75,32,0.2);
+      border-color: rgba(204,75,32,0.3);
+    }
+    
+    .faq-icon svg {
+      width: 16px;
+      height: 16px;
+      color: var(--t3);
+      transition: all 0.4s var(--ease-out-expo);
+    }
+    
+    .faq-item.open .faq-icon svg {
+      transform: rotate(180deg);
+      color: var(--apple-blue-l);
+    }
+    
+    .faq-answer {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.4s var(--ease-out-expo);
+    }
+    
+    .faq-item.open .faq-answer {
+      grid-template-rows: 1fr;
+    }
+    
+    .faq-answer-inner {
+      overflow: hidden;
+    }
+    
+    .faq-answer-text {
+      padding: 0 24px 24px;
+      color: var(--t2);
+      font-size: 0.88rem;
+      line-height: 1.75;
+    }
+    
+    @media (min-width: 768px) {
+      .faq-answer-text {
+        font-size: 0.92rem;
+      }
+    }
+    
+    .faq-cta {
+      margin-top: 48px;
+      text-align: center;
+    }
+    
+    .faq-cta-text {
+      color: var(--t3);
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+    
+    .faq-cta-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--apple-blue-l);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: gap 0.3s;
+    }
+    
+    .faq-cta-link:hover {
+      gap: 12px;
+    }
+    
+    /* =====================================================
+       FINAL CTA
+       ===================================================== */
+    .final-cta {
+      padding: 144px 40px;
+      text-align: center;
+    }
+    
+    .final-cta-card {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 64px 48px;
+      border-radius: var(--r-2xl);
+    }
+    
+    .final-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--apple-blue-l);
+      letter-spacing: 0.01em;
+      margin-bottom: 28px;
+      justify-content: center;
+    }
+    
+    .final-cta-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--apple-blue-l);
+      border-radius: 50%;
+    }
+    
+    .final-cta-title {
+      font-size: clamp(2rem, 4.5vw, 3rem);
+      font-weight: 600;
+      letter-spacing: -0.04em;
+      line-height: 1.08;
+      margin-bottom: 20px;
+    }
+    
+    .final-cta-desc {
+      font-size: 0.98rem;
+      color: var(--t2);
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .final-cta-btn {
+      display: inline-block;
+      width: 100%;
+      max-width: 380px;
+      padding: 16px 32px;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    
+    .final-cta-features {
+      font-size: 0.73rem;
+      color: var(--t3);
+      letter-spacing: 0.03em;
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .final-cta-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .final-cta-feature-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--apple-green);
+      border-radius: 50%;
+    }
+    
+    /* =====================================================
+       FOOTER
+       ===================================================== */
+    .footer {
+      background: var(--bg0);
+      border-top: 1px solid var(--glass-border);
+      padding: 48px 40px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    
+    @media (min-width: 640px) {
+      .footer {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .footer {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 48px;
+      }
+    }
+    
+    .footer-logo {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      display: block;
+    }
+    
+    .footer-desc {
+      font-size: 0.83rem;
+      color: var(--t3);
+      line-height: 1.6;
+      max-width: 240px;
+    }
+    
+    .footer-heading {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--t3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .footer-link {
+      font-size: 0.85rem;
+      color: var(--t2);
+      transition: color 0.2s;
+    }
+    
+    .footer-link:hover {
+      color: var(--t1);
+    }
+    
+    .footer-bottom {
+      background: var(--bg0);
+      border-top: 1px solid var(--glass-border);
+      padding: 20px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    @media (min-width: 640px) {
+      .footer-bottom {
+        flex-direction: row;
+      }
+    }
+    
+    .footer-copy {
+      font-size: 0.72rem;
+      color: var(--t3);
+      letter-spacing: 0.04em;
+    }
+    
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .footer-credit {
+      font-size: 0.72rem;
+      color: var(--t3);
+      letter-spacing: 0.04em;
+    }
+    
+    .footer-accent {
+      color: var(--apple-blue-l);
+    }
+    
+    /* =====================================================
+       STICKY CTA (Mobile)
+       ===================================================== */
+    .sticky-cta {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 150;
+      padding: 12px 16px;
+      background: rgba(10, 10, 10, 0.9);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border-top: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transform: translateY(100%);
+      transition: transform 0.4s var(--ease-out-expo);
+    }
+    
+    .sticky-cta.visible {
+      transform: translateY(0);
+    }
+    
+    @media (min-width: 768px) {
+      .sticky-cta {
+        display: none;
+      }
+    }
+    
+    .sticky-cta-text {
+      flex: 1;
+    }
+    
+    .sticky-cta-urgency {
+      font-size: 0.72rem;
+      color: var(--apple-orange);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .sticky-cta-urgency-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--apple-orange);
+      border-radius: 50%;
+    }
+    
+    .sticky-cta-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    
+    .sticky-cta-btn {
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    
+    /* =====================================================
+       VISUAL ELEMENTS (Process)
+       ===================================================== */
+    .visual-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .visual-code-comment {
+      font-size: 0.72rem;
+      color: var(--t4);
+    }
+    
+    .visual-code-line {
+      font-size: 0.78rem;
+      color: var(--t2);
+    }
+    
+    .visual-code-cmd {
+      color: var(--apple-blue-l);
+    }
+    
+    .visual-code-arg {
+      color: var(--apple-green);
+    }
+    
+    .visual-code-result {
+      font-size: 0.72rem;
+      color: var(--apple-green);
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px solid var(--glass-border);
+    }
+    
+    .visual-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .visual-bar-label {
+      font-size: 0.72rem;
+      color: var(--t2);
+      min-width: 88px;
+    }
+    
+    .visual-bar-track {
+      flex: 1;
+      height: 5px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .visual-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    
+    .visual-bar-value {
+      font-size: 0.72rem;
+      font-weight: 500;
+      min-width: 54px;
+      text-align: right;
+    }
+    
+    .visual-sprint {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 0.78rem;
+      color: var(--t2);
+    }
+    
+    .visual-sprint-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .visual-sprint-badge {
+      margin-left: auto;
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    
+    .visual-metric {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .visual-metric-label {
+      font-size: 0.62rem;
+      color: var(--t3);
+      letter-spacing: 0.06em;
+    }
+    
+    .visual-metric-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    
+    .visual-metric-sub {
+      font-size: 0.62rem;
+      color: var(--t4);
+    }
+    
+    .visual-metric-arrow {
+      color: var(--t3);
+      font-size: 0.9rem;
+    }
+    
+    .visual-outcome {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: var(--t2);
+    }
+    
+    .visual-outcome-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      .section {
+        padding: 80px 24px;
+      }
+      
+      .container {
+        padding: 0 24px;
+      }
+      
+      .navbar {
+        padding: 0 24px;
+      }
+      
+      .hero {
+        padding: 100px 24px 80px;
+      }
+      
+      .mesh-orb {
+        filter: blur(60px);
+        opacity: 0.3;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<div id="cur"></div>
-<div id="cur-ring"></div>
-
-<!-- NAV -->
-<nav>
-  <a href="#" class="logo">
-    <div class="logo-mark">
-      <svg viewBox="0 0 12 12"><path d="M6 1L11 4v4L6 11 1 8V4z"/></svg>
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="#" class="navbar-logo">thrustcode</a>
+    
+    <ul class="navbar-links">
+      <li><a href="#pillars" class="navbar-link">Piliers</a></li>
+      <li><a href="#process" class="navbar-link">Processus</a></li>
+      <li><a href="#services" class="navbar-link">Services</a></li>
+      <li><a href="#magnets" class="navbar-link">Ressources</a></li>
+      <li><a href="#contact" class="navbar-link">Contact</a></li>
+    </ul>
+    
+    <div class="flex items-center gap-4">
+      <a href="#contact" class="btn-primary navbar-cta">Audit gratuit</a>
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
     </div>
-    thrustcode
-  </a>
-  <ul class="nav-links">
-    <li><a href="#pillars">Piliers</a></li>
-    <li><a href="#process">Processus</a></li>
-    <li><a href="#services">Services</a></li>
-    <li><a href="#magnets">Ressources</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ul>
-  <a href="mailto:thrustcode@proton.me" class="nav-pill" style="text-decoration:none;">Audit gratuit</a>
-</nav>
-
-<!-- HERO -->
-<section class="hero" id="hero">
-  <div class="mesh-wrap">
-    <div class="mesh-orb" style="width:700px;height:700px;background:radial-gradient(circle,rgba(0,113,227,0.18),transparent 70%);top:-200px;left:-150px;animation:float 18s ease-in-out infinite;"></div>
-    <div class="mesh-orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(191,90,242,0.1),transparent 70%);bottom:0;right:-100px;animation:float 22s ease-in-out infinite reverse;"></div>
-    <div class="mesh-orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(48,209,88,0.08),transparent 70%);bottom:20%;left:15%;animation:float 16s ease-in-out infinite 3s;"></div>
-  </div>
-
-  <div class="hero-eyebrow"><span class="eyebrow-dot"></span>ESN spécialisée Rust · Paris · Worldwide</div>
-
-  <h1 class="hero-title">Construit pour durer. Éprouvé pour garantir votre sécurité.</h1>
-
-  <p class="hero-sub">Thrustcode construit des solutions système en Rust — performance extrême, sécurité mémoire by design, empreinte énergétique réduite de 98%.</p>
-
-  <div class="hero-actions">
-    <a href="mailto:thrustcode@proton.me" class="btn-apple" style="text-decoration:none;">Démarrer un projet →</a>
-    <a href="mailto:thrustcode@proton.me" class="btn-glass" style="text-decoration:none;">Voir notre approche</a>
-  </div>
-
-  <div class="hero-stats">
-    <div class="stat-cell">
-      <div class="stat-n"><span class="acc">60</span>×</div>
-      <div class="stat-l">Plus rapide que Python</div>
+    
+    <div class="mobile-menu" id="mobile-menu">
+      <ul>
+        <li><a href="#pillars" class="mobile-menu-link">Piliers</a></li>
+        <li><a href="#process" class="mobile-menu-link">Processus</a></li>
+        <li><a href="#services" class="mobile-menu-link">Services</a></li>
+        <li><a href="#magnets" class="mobile-menu-link">Ressources</a></li>
+        <li><a href="#contact" class="mobile-menu-link">Contact</a></li>
+      </ul>
     </div>
-    <div class="stat-cell">
-      <div class="stat-n">−<span class="acc">98</span>%</div>
-      <div class="stat-l">Énergie vs Python</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-n">−<span class="acc">70</span>%</div>
-      <div class="stat-l">Surface vulnérabilités</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-n"><span class="acc">10</span>+</div>
-      <div class="stat-l">Ans langue préférée devs</div>
-    </div>
-  </div>
-</section>
+  </nav>
 
-<!-- TICKER -->
-<div class="ticker-wrap">
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="mesh-orb mesh-orb-blue animate-float-slow" style="width:800px;height:800px;top:-250px;left:-200px"></div>
+    <div class="mesh-orb mesh-orb-purple animate-float-reverse" style="width:600px;height:600px;bottom:-100px;right:-150px"></div>
+    <div class="mesh-orb mesh-orb-green animate-float" style="width:400px;height:400px;bottom:15%;left:10%"></div>
+    <div class="mesh-orb mesh-orb-orange animate-breathe" style="width:350px;height:350px;top:20%;right:15%"></div>
+    
+    <div class="glass-button hero-badge animate-fadeUp" style="animation-delay:0.15s">
+      <span class="hero-badge-dot animate-pulse-glow"></span>
+      ESN spécialisée Rust — Paris — Worldwide
+    </div>
+    
+    <h1 class="hero-title gradient-text animate-fadeUp" style="animation-delay:0.3s">
+      Construit pour durer. Éprouvé pour garantir votre sécurité.
+    </h1>
+    
+    <p class="hero-subtitle animate-fadeUp" style="animation-delay:0.45s">
+      Thrustcode construit des solutions système en Rust — performance extrême, sécurité mémoire by design, empreinte énergétique réduite de 98%.
+    </p>
+    
+    <div class="hero-actions animate-fadeUp" style="animation-delay:0.6s">
+      <a href="#contact" class="btn-primary hero-btn">Démarrer un projet →</a>
+      <a href="#process" class="glass-button hero-btn hero-btn-secondary">Voir notre approche</a>
+    </div>
+    
+    <div class="glass-elevated hero-stats animate-fadeUp" style="animation-delay:0.75s">
+      <div class="hero-stat">
+        <div class="hero-stat-value gradient-text"><span class="hero-stat-accent">60</span>x</div>
+        <div class="hero-stat-label">Plus rapide que Python</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value gradient-text">-<span class="hero-stat-accent">98</span>%</div>
+        <div class="hero-stat-label">Énergie vs Python</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value gradient-text">-<span class="hero-stat-accent">70</span>%</div>
+        <div class="hero-stat-label">Surface vulnérabilités</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value gradient-text"><span class="hero-stat-accent">10</span>+</div>
+        <div class="hero-stat-label">Ans langue préférée devs</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ticker -->
   <div class="ticker">
-    <span class="t-item">Performance extrême <span class="t-dot"></span></span>
-    <span class="t-item">Sécurité mémoire by design <span class="t-dot"></span></span>
-    <span class="t-item">Green IT · −98% vs Python <span class="t-dot"></span></span>
-    <span class="t-item">NSA & CISA recommandent Rust <span class="t-dot"></span></span>
-    <span class="t-item">AWS · Microsoft · Android · Linux <span class="t-dot"></span></span>
-    <span class="t-item">Zero-cost abstractions <span class="t-dot"></span></span>
-    <span class="t-item">Borrow checker · pas de GC <span class="t-dot"></span></span>
-    <span class="t-item">Performance extrême <span class="t-dot"></span></span>
-    <span class="t-item">Sécurité mémoire by design <span class="t-dot"></span></span>
-    <span class="t-item">Green IT · −98% vs Python <span class="t-dot"></span></span>
-    <span class="t-item">NSA & CISA recommandent Rust <span class="t-dot"></span></span>
-    <span class="t-item">AWS · Microsoft · Android · Linux <span class="t-dot"></span></span>
-    <span class="t-item">Zero-cost abstractions <span class="t-dot"></span></span>
-    <span class="t-item">Borrow checker · pas de GC <span class="t-dot"></span></span>
-  </div>
-</div>
-
-<!-- PILLARS -->
-<section class="pillars" id="pillars">
-  <div class="pillars-inner">
-    <div class="section-eyebrow reveal">Nos piliers</div>
-    <h2 class="section-h reveal">Trois raisons de choisir <span class="hi">Rust.</span></h2>
-
-    <div class="pillars-grid reveal">
-      <div class="pillar-card" style="--card-line:var(--apple-blue-l)">
-        <div class="pillar-icon-wrap" style="background:rgba(232,105,42,0.1)">⚡</div>
-        <div class="pillar-name">Performance</div>
-        <p class="pillar-desc">Compilation native, zéro runtime, abstractions zéro coût. Vos systèmes tournent au niveau du silicium. 60× plus rapide que Python sur les tâches CPU-intensives.</p>
-        <div class="pillar-metric">2× Go · 60× Python · latence &lt;15ms @ 1k rps</div>
-      </div>
-      <div class="pillar-card" style="--card-line:var(--apple-purple)">
-        <div class="pillar-icon-wrap" style="background:rgba(191,90,242,0.1)">🔒</div>
-        <div class="pillar-name">Sécurité</div>
-        <p class="pillar-desc">Le borrow checker élimine à la compilation 70% des CVE critiques. Recommandé par NSA et CISA depuis 2024. Android est passé de 76% à 24% de bugs mémoire.</p>
-        <div class="pillar-metric">−70% surface vulnérabilités · conformité NIS2 / DORA</div>
-      </div>
-      <div class="pillar-card" style="--card-line:var(--apple-green)">
-        <div class="pillar-icon-wrap" style="background:rgba(48,209,88,0.1)">🌿</div>
-        <div class="pillar-name">Green IT</div>
-        <p class="pillar-desc">−50% vs Java, −98% vs Python en consommation énergétique. Moins de serveurs, moins de CO₂, moins de coûts cloud. Données mesurées, exportables en CSRD.</p>
-        <div class="pillar-metric">−98% vs Python · −50% vs Java · CSRD-ready</div>
-      </div>
+    <div class="ticker-inner animate-ticker">
+      <span class="ticker-item">Performance extrême<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Sécurité mémoire by design<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Green IT - -98% vs Python<span class="ticker-dot"></span></span>
+      <span class="ticker-item">NSA & CISA recommandent Rust<span class="ticker-dot"></span></span>
+      <span class="ticker-item">AWS - Microsoft - Android - Linux<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Zero-cost abstractions<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Borrow checker - pas de GC<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Performance extrême<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Sécurité mémoire by design<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Green IT - -98% vs Python<span class="ticker-dot"></span></span>
+      <span class="ticker-item">NSA & CISA recommandent Rust<span class="ticker-dot"></span></span>
+      <span class="ticker-item">AWS - Microsoft - Android - Linux<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Zero-cost abstractions<span class="ticker-dot"></span></span>
+      <span class="ticker-item">Borrow checker - pas de GC<span class="ticker-dot"></span></span>
     </div>
   </div>
-</section>
 
-<!-- PROCESS -->
-<section class="process" id="process">
-  <div class="mesh-wrap">
-    <div class="mesh-orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(48,209,88,0.07),transparent 70%);top:10%;right:-150px;animation:float 20s ease-in-out infinite;"></div>
-  </div>
-  <div class="process-inner">
-    <div class="section-eyebrow reveal">Comment ça marche</div>
-    <h2 class="section-h reveal">De votre besoin à la <span class="hi">mise en production.</span></h2>
-    <p class="section-sub reveal">Un processus structuré en 5 étapes, conçu pour minimiser les risques et maximiser la valeur livrée à chaque sprint.</p>
+  <!-- Client Logos -->
+  <section class="clients">
+    <div class="container">
+      <p class="clients-label">Ils nous font confiance</p>
+      
+      <div class="clients-grid">
+        <div class="client-item">
+          <div class="client-logo">TechCorp</div>
+          <span class="client-industry">Fintech</span>
+        </div>
+        <div class="client-item">
+          <div class="client-logo">DataFlow</div>
+          <span class="client-industry">Big Data</span>
+        </div>
+        <div class="client-item">
+          <div class="client-logo">SecureNet</div>
+          <span class="client-industry">Cybersécurité</span>
+        </div>
+        <div class="client-item">
+          <div class="client-logo">CloudScale</div>
+          <span class="client-industry">Cloud</span>
+        </div>
+        <div class="client-item">
+          <div class="client-logo">GreenTech</div>
+          <span class="client-industry">CleanTech</span>
+        </div>
+        <div class="client-item">
+          <div class="client-logo">FastAPI</div>
+          <span class="client-industry">SaaS</span>
+        </div>
+      </div>
+      
+      <div class="clients-stats">
+        <div class="clients-stat">
+          <div class="clients-stat-value">50+</div>
+          <div class="clients-stat-label">Projets livrés</div>
+        </div>
+        <div class="clients-stat">
+          <div class="clients-stat-value">40x</div>
+          <div class="clients-stat-label">Gain moyen latence</div>
+        </div>
+        <div class="clients-stat">
+          <div class="clients-stat-value">0</div>
+          <div class="clients-stat-label">CVE mémoire</div>
+        </div>
+        <div class="clients-stat">
+          <div class="clients-stat-value clients-stat-value-accent">98%</div>
+          <div class="clients-stat-label">Clients satisfaits</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <div class="process-steps reveal">
-
-      <!-- STEP 1 -->
-      <div class="p-step">
-        <div class="p-num-wrap"><div class="p-num">01</div></div>
-        <div class="p-body">
-          <div>
-            <span class="p-tag" style="background:rgba(232,105,42,0.1);color:var(--apple-blue-l)">Découverte</span>
-            <span class="p-dur">— Semaine 1</span>
+  <!-- Pillars -->
+  <section class="section section-alt" id="pillars">
+    <div class="mesh-orb mesh-orb-orange animate-float-slow" style="width:500px;height:500px;top:-150px;right:-100px"></div>
+    
+    <div class="container" style="position:relative;z-index:10">
+      <div class="reveal" data-reveal>
+        <div style="font-size:0.72rem;font-weight:500;color:var(--apple-blue-l);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">Nos piliers</div>
+        <h2 style="font-size:clamp(2rem,4vw,3.2rem);font-weight:600;letter-spacing:-0.035em;line-height:1.1">
+          Trois raisons de choisir <span class="gradient-text-accent">Rust.</span>
+        </h2>
+      </div>
+      
+      <div class="pillars-grid reveal" data-reveal>
+        <div class="glass-card pillar-card">
+          <div class="pillar-accent" style="background:linear-gradient(90deg,transparent,var(--apple-blue-l),transparent)"></div>
+          <div class="pillar-icon" style="background:rgba(232,105,42,0.12)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--apple-blue-l)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
           </div>
-          <h3 class="p-title">Diagnostic & cadrage</h3>
-          <p class="p-desc">Nous analysons votre contexte en profondeur : stack actuelle, goulots identifiés, contraintes réglementaires, équipe en place. Un atelier de 2 jours avec vos équipes techniques et décideurs pour aligner vision et faisabilité.</p>
-          <div class="p-chips">
-            <span class="chip">Cartographie codebase</span>
-            <span class="chip">Scoring performance / sécu / green</span>
-            <span class="chip">3 axes prioritaires</span>
+          <div class="pillar-title">Performance</div>
+          <p class="pillar-desc">Compilation native, zero runtime, abstractions zero coût. Vos systèmes tournent au niveau du silicium. 60x plus rapide que Python sur les tâches CPU-intensives.</p>
+          <div class="pillar-metric font-mono">2x Go — 60x Python — latence &lt;15ms @ 1k rps</div>
+        </div>
+        
+        <div class="glass-card pillar-card">
+          <div class="pillar-accent" style="background:linear-gradient(90deg,transparent,var(--apple-purple),transparent)"></div>
+          <div class="pillar-icon" style="background:rgba(191,90,242,0.12)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--apple-purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
           </div>
-          <div class="p-visual">
-            <div class="code-block">
-              <span class="cb-comment">// Analyse statique en cours...</span>
-              <span class="cb-line"><span class="cb-kw">cargo</span> audit --json | jq <span class="cb-str">'.vulnerabilities'</span></span>
-              <span class="cb-line"><span class="cb-kw">cargo</span> clippy <span class="cb-str">-- -D warnings -W clippy::all</span></span>
-              <span class="cb-line"><span class="cb-kw">cargo</span> flamegraph <span class="cb-str">--bin</span> api_server</span>
-              <span class="cb-ok">✓ 147 modules · 12 points critiques · 3 quick wins identifiés</span>
+          <div class="pillar-title">Sécurité</div>
+          <p class="pillar-desc">Le borrow checker élimine à la compilation 70% des CVE critiques. Recommandé par NSA et CISA depuis 2024. Android est passé de 76% à 24% de bugs mémoire.</p>
+          <div class="pillar-metric font-mono">-70% surface vulnérabilités — conformité NIS2 / DORA</div>
+        </div>
+        
+        <div class="glass-card pillar-card">
+          <div class="pillar-accent" style="background:linear-gradient(90deg,transparent,var(--apple-green),transparent)"></div>
+          <div class="pillar-icon" style="background:rgba(48,209,88,0.12)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--apple-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+            </svg>
+          </div>
+          <div class="pillar-title">Green IT</div>
+          <p class="pillar-desc">-50% vs Java, -98% vs Python en consommation énergétique. Moins de serveurs, moins de CO2, moins de coûts cloud. Données mesurées, exportables en CSRD.</p>
+          <div class="pillar-metric font-mono">-98% vs Python — -50% vs Java — CSRD-ready</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Process -->
+  <section class="section" id="process">
+    <div class="mesh-orb mesh-orb-green animate-float" style="width:600px;height:600px;top:10%;right:-150px;opacity:0.35"></div>
+    
+    <div class="container" style="max-width:900px;position:relative;z-index:10">
+      <div class="reveal" data-reveal>
+        <div style="font-size:0.72rem;font-weight:500;color:var(--apple-blue-l);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">Comment ça marche</div>
+        <h2 style="font-size:clamp(2rem,4vw,3.2rem);font-weight:600;letter-spacing:-0.03em;line-height:1.1">
+          De votre besoin à la <span class="gradient-text-accent">mise en production.</span>
+        </h2>
+        <p style="font-size:1rem;color:var(--t2);max-width:480px;line-height:1.65;margin-top:14px">
+          Un processus structuré en 5 étapes, conçu pour minimiser les risques et maximiser la valeur livrée à chaque sprint.
+        </p>
+      </div>
+      
+      <div class="reveal" data-reveal style="margin-top:64px">
+        <!-- Step 1 -->
+        <div class="process-step">
+          <div class="process-line"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:2px">
+            <div class="process-num">01</div>
+          </div>
+          <div style="padding-top:8px">
+            <div>
+              <span class="process-tag" style="background:rgba(232,105,42,0.1);color:var(--apple-blue-l)">Découverte</span>
+              <span class="process-duration">— Semaine 1</span>
+            </div>
+            <h3 class="process-title">Diagnostic & cadrage</h3>
+            <p class="process-desc">Nous analysons votre contexte en profondeur : stack actuelle, goulots identifiés, contraintes réglementaires, équipe en place. Un atelier de 2 jours avec vos équipes techniques et décideurs pour aligner vision et faisabilité.</p>
+            <div class="process-chips">
+              <span class="process-chip">Cartographie codebase</span>
+              <span class="process-chip">Scoring performance / sécu / green</span>
+              <span class="process-chip">3 axes prioritaires</span>
+            </div>
+            <div class="process-visual visual-code">
+              <div class="visual-code-comment">// Analyse statique en cours...</div>
+              <div class="visual-code-line"><span class="visual-code-cmd">cargo</span> audit --json | jq <span class="visual-code-arg">'.vulnerabilities'</span></div>
+              <div class="visual-code-line"><span class="visual-code-cmd">cargo</span> clippy <span class="visual-code-arg">-- -D warnings -W clippy::all</span></div>
+              <div class="visual-code-line"><span class="visual-code-cmd">cargo</span> flamegraph <span class="visual-code-arg">--bin</span> api_server</div>
+              <div class="visual-code-result">✓ 147 modules - 12 points critiques - 3 quick wins identifiés</div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- STEP 2 -->
-      <div class="p-step">
-        <div class="p-num-wrap"><div class="p-num">02</div></div>
-        <div class="p-body">
-          <div>
-            <span class="p-tag" style="background:rgba(191,90,242,0.1);color:var(--apple-purple)">Planification</span>
-            <span class="p-dur">— Semaine 2</span>
+        
+        <!-- Step 2 -->
+        <div class="process-step">
+          <div class="process-line"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:2px">
+            <div class="process-num">02</div>
           </div>
-          <h3 class="p-title">Roadmap & proposition technique</h3>
-          <p class="p-desc">Sur la base du diagnostic, nous construisons un plan de migration priorisé par ROI. Chaque module est évalué selon trois critères : impact performance, réduction risque sécurité, gain énergétique. Vous validez avant qu'une ligne de code soit écrite.</p>
-          <div class="p-chips">
-            <span class="chip">Roadmap 30 / 60 / 90 jours</span>
-            <span class="chip">ROI estimé par module</span>
-            <span class="chip">Architecture cible Rust</span>
-          </div>
-          <div class="p-visual">
-            <div class="bars">
-              <div class="b-row">
-                <span class="b-lbl">Auth service</span>
-                <div class="b-track"><div class="b-fill" style="width:88%;--bc:var(--apple-green)"></div></div>
-                <span class="b-val" style="color:var(--apple-green)">ROI ×4.2</span>
+          <div style="padding-top:8px">
+            <div>
+              <span class="process-tag" style="background:rgba(191,90,242,0.1);color:var(--apple-purple)">Planification</span>
+              <span class="process-duration">— Semaine 2</span>
+            </div>
+            <h3 class="process-title">Roadmap & proposition technique</h3>
+            <p class="process-desc">Sur la base du diagnostic, nous construisons un plan de migration priorisé par ROI. Chaque module est évalué selon trois critères : impact performance, réduction risque sécurité, gain énergétique.</p>
+            <div class="process-chips">
+              <span class="process-chip">Roadmap 30 / 60 / 90 jours</span>
+              <span class="process-chip">ROI estimé par module</span>
+              <span class="process-chip">Architecture cible Rust</span>
+            </div>
+            <div class="process-visual" style="display:flex;flex-direction:column;gap:9px">
+              <div class="visual-bar">
+                <span class="visual-bar-label">Auth service</span>
+                <div class="visual-bar-track"><div class="visual-bar-fill" style="width:88%;background:var(--apple-green)"></div></div>
+                <span class="visual-bar-value" style="color:var(--apple-green)">ROI x4.2</span>
               </div>
-              <div class="b-row">
-                <span class="b-lbl">Data pipeline</span>
-                <div class="b-track"><div class="b-fill" style="width:72%;--bc:var(--apple-blue-l)"></div></div>
-                <span class="b-val" style="color:var(--apple-blue-l)">ROI ×3.1</span>
+              <div class="visual-bar">
+                <span class="visual-bar-label">Data pipeline</span>
+                <div class="visual-bar-track"><div class="visual-bar-fill" style="width:72%;background:var(--apple-blue-l)"></div></div>
+                <span class="visual-bar-value" style="color:var(--apple-blue-l)">ROI x3.1</span>
               </div>
-              <div class="b-row">
-                <span class="b-lbl">API gateway</span>
-                <div class="b-track"><div class="b-fill" style="width:55%;--bc:var(--apple-orange)"></div></div>
-                <span class="b-val" style="color:var(--apple-orange)">ROI ×2.4</span>
+              <div class="visual-bar">
+                <span class="visual-bar-label">API gateway</span>
+                <div class="visual-bar-track"><div class="visual-bar-fill" style="width:55%;background:var(--apple-orange)"></div></div>
+                <span class="visual-bar-value" style="color:var(--apple-orange)">ROI x2.4</span>
               </div>
-              <div class="b-row">
-                <span class="b-lbl">Cache layer</span>
-                <div class="b-track"><div class="b-fill" style="width:38%;--bc:var(--apple-purple)"></div></div>
-                <span class="b-val" style="color:var(--apple-purple)">ROI ×1.8</span>
+              <div class="visual-bar">
+                <span class="visual-bar-label">Cache layer</span>
+                <div class="visual-bar-track"><div class="visual-bar-fill" style="width:38%;background:var(--apple-purple)"></div></div>
+                <span class="visual-bar-value" style="color:var(--apple-purple)">ROI x1.8</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- STEP 3 -->
-      <div class="p-step">
-        <div class="p-num-wrap"><div class="p-num">03</div></div>
-        <div class="p-body">
-          <div>
-            <span class="p-tag" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">Développement</span>
-            <span class="p-dur">— Semaines 3 → N</span>
+        
+        <!-- Step 3 -->
+        <div class="process-step">
+          <div class="process-line"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:2px">
+            <div class="process-num">03</div>
           </div>
-          <h3 class="p-title">Migration incrémentale en sprints</h3>
-          <p class="p-desc">Nos ingénieurs Rust travaillent module par module, en cohabitation avec votre code existant via FFI (Foreign Function Interface). Chaque sprint de 2 semaines livre du code testé, documenté et déployable. Zéro downtime garanti via le Strangler Fig Pattern.</p>
-          <div class="p-chips">
-            <span class="chip">Strangler Fig Pattern</span>
-            <span class="chip">Sprints de 2 semaines</span>
-            <span class="chip">Tests non-régression continus</span>
-            <span class="chip">FFI cohabitation</span>
-          </div>
-          <div class="p-visual">
-            <div class="sprints">
-              <div class="spr"><div class="spr-dot done"></div><span>Sprint 1 · Auth service</span><span class="spr-badge sb-done">✓ Livré</span></div>
-              <div class="spr"><div class="spr-dot done"></div><span>Sprint 2 · Data pipeline</span><span class="spr-badge sb-done">✓ Livré</span></div>
-              <div class="spr"><div class="spr-dot live"></div><span>Sprint 3 · API gateway</span><span class="spr-badge sb-live">● En cours</span></div>
-              <div class="spr"><div class="spr-dot wait"></div><span>Sprint 4 · Cache layer</span><span class="spr-badge sb-wait">Planifié</span></div>
-              <div class="spr"><div class="spr-dot wait"></div><span>Sprint 5 · WebSocket service</span><span class="spr-badge sb-wait">Planifié</span></div>
+          <div style="padding-top:8px">
+            <div>
+              <span class="process-tag" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">Développement</span>
+              <span class="process-duration">— Semaines 3 → N</span>
+            </div>
+            <h3 class="process-title">Migration incrémentale en sprints</h3>
+            <p class="process-desc">Nos ingénieurs Rust travaillent module par module, en cohabitation avec votre code existant via FFI. Chaque sprint de 2 semaines livre du code testé, documenté et déployable.</p>
+            <div class="process-chips">
+              <span class="process-chip">Strangler Fig Pattern</span>
+              <span class="process-chip">Sprints de 2 semaines</span>
+              <span class="process-chip">Tests non-régression continus</span>
+              <span class="process-chip">FFI cohabitation</span>
+            </div>
+            <div class="process-visual" style="display:flex;flex-direction:column;gap:7px">
+              <div class="visual-sprint">
+                <div class="visual-sprint-dot" style="background:var(--apple-green)"></div>
+                <span>Sprint 1 - Auth service</span>
+                <span class="visual-sprint-badge" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">✓ Livré</span>
+              </div>
+              <div class="visual-sprint">
+                <div class="visual-sprint-dot" style="background:var(--apple-green)"></div>
+                <span>Sprint 2 - Data pipeline</span>
+                <span class="visual-sprint-badge" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">✓ Livré</span>
+              </div>
+              <div class="visual-sprint">
+                <div class="visual-sprint-dot animate-pulse-dot" style="background:var(--apple-blue-l)"></div>
+                <span>Sprint 3 - API gateway</span>
+                <span class="visual-sprint-badge" style="background:rgba(232,105,42,0.1);color:var(--apple-blue-l)">● En cours</span>
+              </div>
+              <div class="visual-sprint">
+                <div class="visual-sprint-dot" style="background:rgba(255,255,255,0.15)"></div>
+                <span>Sprint 4 - Cache layer</span>
+                <span class="visual-sprint-badge" style="background:rgba(255,255,255,0.05);color:var(--t3)">Planifié</span>
+              </div>
+              <div class="visual-sprint">
+                <div class="visual-sprint-dot" style="background:rgba(255,255,255,0.15)"></div>
+                <span>Sprint 5 - WebSocket service</span>
+                <span class="visual-sprint-badge" style="background:rgba(255,255,255,0.05);color:var(--t3)">Planifié</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- STEP 4 -->
-      <div class="p-step">
-        <div class="p-num-wrap"><div class="p-num">04</div></div>
-        <div class="p-body">
-          <div>
-            <span class="p-tag" style="background:rgba(255,159,10,0.1);color:var(--apple-orange)">Validation</span>
-            <span class="p-dur">— J−14 avant go-live</span>
+        
+        <!-- Step 4 -->
+        <div class="process-step">
+          <div class="process-line"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:2px">
+            <div class="process-num">04</div>
           </div>
-          <h3 class="p-title">Hardening, tests & mesures</h3>
-          <p class="p-desc">Avant chaque mise en production : tests de charge (k6), audit sécurité (cargo-audit, fuzzing), mesure énergétique réelle (Scaphandre / RAPL). Les résultats sont documentés et comparés à la baseline initiale avec des données auditables.</p>
-          <div class="p-chips">
-            <span class="chip">Benchmark avant / après</span>
-            <span class="chip">cargo-audit + fuzzing</span>
-            <span class="chip">Mesure CO₂ Scaphandre</span>
-            <span class="chip">Tests k6 sous charge</span>
-          </div>
-          <div class="p-visual">
-            <div class="ba-wrap">
-              <div class="ba-pair">
-                <div class="ba-col">
-                  <div class="ba-lbl">AVANT</div>
-                  <div class="ba-val before">2 840 ms</div>
-                  <div class="ba-sub">latence p99</div>
+          <div style="padding-top:8px">
+            <div>
+              <span class="process-tag" style="background:rgba(255,159,10,0.1);color:var(--apple-orange)">Validation</span>
+              <span class="process-duration">— J-14 avant go-live</span>
+            </div>
+            <h3 class="process-title">Hardening, tests & mesures</h3>
+            <p class="process-desc">Avant chaque mise en production : tests de charge (k6), audit sécurité (cargo-audit, fuzzing), mesure énergétique réelle. Les résultats sont documentés et comparés à la baseline initiale.</p>
+            <div class="process-chips">
+              <span class="process-chip">Benchmark avant / après</span>
+              <span class="process-chip">cargo-audit + fuzzing</span>
+              <span class="process-chip">Mesure CO₂ Scaphandre</span>
+              <span class="process-chip">Tests k6 sous charge</span>
+            </div>
+            <div class="process-visual" style="display:flex;gap:24px;flex-wrap:wrap">
+              <div class="visual-metric">
+                <div>
+                  <div class="visual-metric-label">AVANT</div>
+                  <div class="visual-metric-value" style="color:var(--t3);text-decoration:line-through;text-decoration-color:rgba(255,59,48,0.5)">2 840 ms</div>
+                  <div class="visual-metric-sub">latence p99</div>
                 </div>
-                <div class="ba-arrow">→</div>
-                <div class="ba-col">
-                  <div class="ba-lbl">APRÈS</div>
-                  <div class="ba-val after">47 ms</div>
-                  <div class="ba-sub">latence p99</div>
+                <div class="visual-metric-arrow">→</div>
+                <div>
+                  <div class="visual-metric-label">APRÈS</div>
+                  <div class="visual-metric-value" style="color:var(--apple-green)">47 ms</div>
+                  <div class="visual-metric-sub">latence p99</div>
                 </div>
               </div>
-              <div class="ba-pair">
-                <div class="ba-col">
-                  <div class="ba-lbl">AVANT</div>
-                  <div class="ba-val before">18 instances</div>
-                  <div class="ba-sub">EC2 t3.large</div>
+              <div class="visual-metric">
+                <div>
+                  <div class="visual-metric-label">AVANT</div>
+                  <div class="visual-metric-value" style="color:var(--t3);text-decoration:line-through;text-decoration-color:rgba(255,59,48,0.5)">18 instances</div>
+                  <div class="visual-metric-sub">EC2 t3.large</div>
                 </div>
-                <div class="ba-arrow">→</div>
-                <div class="ba-col">
-                  <div class="ba-lbl">APRÈS</div>
-                  <div class="ba-val after">6 instances</div>
-                  <div class="ba-sub">EC2 t3.large</div>
+                <div class="visual-metric-arrow">→</div>
+                <div>
+                  <div class="visual-metric-label">APRÈS</div>
+                  <div class="visual-metric-value" style="color:var(--apple-green)">6 instances</div>
+                  <div class="visual-metric-sub">EC2 t3.large</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- STEP 5 -->
-      <div class="p-step">
-        <div class="p-num-wrap"><div class="p-num last-dot">05</div></div>
-        <div class="p-body">
-          <div>
-            <span class="p-tag" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">Transfert</span>
-            <span class="p-dur">— Post go-live</span>
+        
+        <!-- Step 5 -->
+        <div class="process-step">
+          <div style="display:flex;flex-direction:column;align-items:center;padding-top:2px">
+            <div class="process-num process-num-last">05</div>
           </div>
-          <h3 class="p-title">Transfert de compétences & suivi</h3>
-          <p class="p-desc">Nous ne disparaissons pas après la livraison. Sessions de pair programming avec vos développeurs, documentation architecture complète, et suivi de 30 jours post go-live. Votre équipe devient autonome sur le code Rust produit.</p>
-          <div class="p-chips">
-            <span class="chip">Pair programming sessions</span>
-            <span class="chip">Documentation complète</span>
-            <span class="chip">Suivi 30j · SLA garanti</span>
-          </div>
-          <div class="p-visual">
-            <div class="outcomes">
-              <div class="oc"><div class="oc-icon" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">✓</div>Équipe autonome sur le code Rust</div>
-              <div class="oc"><div class="oc-icon" style="background:rgba(232,105,42,0.1);color:var(--apple-blue-l)">✓</div>Documentation architecture livrée</div>
-              <div class="oc"><div class="oc-icon" style="background:rgba(255,159,10,0.1);color:var(--apple-orange)">✓</div>SLA 30 jours post go-live inclus</div>
-              <div class="oc"><div class="oc-icon" style="background:rgba(191,90,242,0.1);color:var(--apple-purple)">✓</div>Rapport de résultats signé & auditable</div>
+          <div style="padding-top:8px">
+            <div>
+              <span class="process-tag" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">Transfert</span>
+              <span class="process-duration">— Post go-live</span>
+            </div>
+            <h3 class="process-title">Transfert de compétences & suivi</h3>
+            <p class="process-desc">Nous ne disparaissons pas après la livraison. Sessions de pair programming avec vos développeurs, documentation architecture complète, et suivi de 30 jours post go-live.</p>
+            <div class="process-chips">
+              <span class="process-chip">Pair programming sessions</span>
+              <span class="process-chip">Documentation complète</span>
+              <span class="process-chip">Suivi 30j - SLA garanti</span>
+            </div>
+            <div class="process-visual" style="display:flex;flex-direction:column;gap:7px">
+              <div class="visual-outcome">
+                <div class="visual-outcome-icon" style="background:rgba(48,209,88,0.1);color:var(--apple-green)">✓</div>
+                Équipe autonome sur le code Rust
+              </div>
+              <div class="visual-outcome">
+                <div class="visual-outcome-icon" style="background:rgba(232,105,42,0.1);color:var(--apple-blue-l)">✓</div>
+                Documentation architecture livrée
+              </div>
+              <div class="visual-outcome">
+                <div class="visual-outcome-icon" style="background:rgba(255,159,10,0.1);color:var(--apple-orange)">✓</div>
+                SLA 30 jours post go-live inclus
+              </div>
+              <div class="visual-outcome">
+                <div class="visual-outcome-icon" style="background:rgba(191,90,242,0.1);color:var(--apple-purple)">✓</div>
+                Rapport de résultats signé & auditable
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-    </div>
-
-    <div class="p-cta reveal">
-      <div>
-        <div class="p-cta-text">Prêt à démarrer ?</div>
-        <div class="p-cta-note">Premier atelier de diagnostic offert · Réponse &lt; 4h ouvrées</div>
-      </div>
-      <div class="p-cta-right">
-        <a href="mailto:thrustcode@proton.me" class="btn-glass" style="text-decoration:none;">En savoir plus</a>
-        <a href="mailto:thrustcode@proton.me" class="btn-apple" style="text-decoration:none;">Démarrer le diagnostic →</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SERVICES -->
-<section class="services" id="services">
-  <div class="services-inner">
-    <div class="section-eyebrow reveal">Nos services</div>
-    <h2 class="section-h reveal">Ce que nous <span class="hi">construisons.</span></h2>
-    <div class="svc-grid">
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-blue-l)">Performance</div>
-        <div class="svc-name">Migration de goulots</div>
-        <p class="svc-desc">Identification et réécriture des chemins critiques (Python/Java/Go → Rust). ROI immédiat sur CPU et latence.</p>
-        <div class="svc-kpi">−40 à −80% CPU · ×2 à ×10 débit</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-blue-l)">Performance</div>
-        <div class="svc-name">Refactoring de code vers Rust <span class="new-tag">Nouveau</span></div>
-        <p class="svc-desc">Modernisation progressive d'un codebase existant par modules. Méthode Strangler Fig, zéro downtime, tests de non-régression continus.</p>
-        <div class="svc-kpi">−40 à −70% dette technique · couverture tests ≥ 80%</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-blue-l)">Performance</div>
-        <div class="svc-name">Microservices haute performance</div>
-        <p class="svc-desc">Services Rust natifs (Actix-web, Axum, Tokio) optimisés pour le throughput et la latence p99 sous charge massive.</p>
-        <div class="svc-kpi">60k rps · p99 &lt;15ms · cold start &lt;30ms</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-purple)">Sécurité</div>
-        <div class="svc-name">Audit sécurité mémoire</div>
-        <p class="svc-desc">Analyse selon les 20 critères CISA/NSA 2025. Rapport CVE potentiels, unsafe blocks, surface d'attaque.</p>
-        <div class="svc-kpi">100% codebase · livraison &lt;10j · NIS2 / DORA</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-purple)">Sécurité</div>
-        <div class="svc-name">Migration C/C++ → Rust</div>
-        <p class="svc-desc">Réécriture sécurisée de composants critiques exposés réseau. Élimine les classes entières de CVE mémoire.</p>
-        <div class="svc-kpi">−70% surface vulnérabilités · conformité NIS2</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-green)">Green IT</div>
-        <div class="svc-name">Audit énergétique numérique</div>
-        <p class="svc-desc">Mesure réelle de la consommation de vos workloads (RAPL, Scaphandre). Baseline CO₂ par service, par API, par batch.</p>
-        <div class="svc-kpi">Mesure milliseconde · rapport CSRD-ready</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-green)">Green IT</div>
-        <div class="svc-name">Migration green</div>
-        <p class="svc-desc">Remplacement des workloads les plus énergivores par des équivalents Rust. Économies mesurées et exportables.</p>
-        <div class="svc-kpi">−50% vs Java · −98% vs Python (source AWS)</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-teal)">Transversal</div>
-        <div class="svc-name">Embedded & firmware Rust</div>
-        <p class="svc-desc">Firmware sur microcontrôleurs (STM32, ESP32, RISC-V) en Rust bare-metal. Fiabilité et sécurité sans RTOS.</p>
-        <div class="svc-kpi">Zéro unsafe non justifié · industrie · médical</div>
-      </div>
-      <div class="svc-card reveal">
-        <div class="svc-cat" style="color:var(--apple-teal)">Transversal</div>
-        <div class="svc-name">Formation Rust équipes</div>
-        <p class="svc-desc">Parcours de montée en compétences sur mesure : 3 niveaux (découverte, intermédiaire, expert). Intra ou inter-entreprise.</p>
-        <div class="svc-kpi">3 jours → autonomie basique · 10j → prod-ready</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- LEAD MAGNETS -->
-<section class="magnets" id="magnets">
-  <div class="mesh-wrap">
-    <div class="mesh-orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(232,105,42,0.08),transparent 70%);top:0;left:-100px;animation:float 18s ease-in-out infinite;"></div>
-  </div>
-  <div class="magnets-inner">
-    <div class="section-eyebrow reveal">Ressources gratuites</div>
-    <h2 class="section-h reveal">Commencez par vous <span class="hi">convaincre.</span></h2>
-    <p class="section-sub reveal">Six outils concrets pour mesurer, avant toute conversation commerciale, ce que Rust peut apporter à votre stack.</p>
-
-    <div class="mag-grid">
-      <div class="mag-card reveal">
-        <div class="mag-type" style="color:var(--apple-blue-l)"><div class="mag-dot" style="background:var(--apple-blue-l)"></div>Outil interactif</div>
-        <div class="mag-title">Calculateur ROI cloud</div>
-        <p class="mag-desc">Saisissez votre stack, votre trafic mensuel et votre facture cloud. L'outil calcule les économies potentielles avec Rust (CPU, RAM, €/mois). Résultat envoyé par email.</p>
-        <div class="mag-cta">Obtenir mon estimation <span>→</span></div>
-      </div>
-      <div class="mag-card reveal">
-        <div class="mag-type" style="color:var(--apple-green)"><div class="mag-dot" style="background:var(--apple-green)"></div>Simulateur CO₂</div>
-        <div class="mag-title">Empreinte carbone numérique</div>
-        <p class="mag-desc">Calcule les tonnes de CO₂ économisées par an en migrant vers Rust. Export PDF avec données auditables pour vos rapports CSRD. Angle Green IT unique sur le marché ESN.</p>
-        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Simuler mon impact <span>→</span></a>
-      </div>
-      <div class="mag-card reveal">
-        <div class="mag-type" style="color:var(--apple-purple)"><div class="mag-dot" style="background:var(--apple-purple)"></div>Rapport PDF</div>
-        <div class="mag-title">Audit sécurité mémoire offert</div>
-        <p class="mag-desc">Checklist de 20 vérifications basée sur les guidelines CISA/NSA juin 2025. Format PDF brandé, généré automatiquement après soumission du formulaire.</p>
-        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Télécharger l'audit <span>→</span></a>
-      </div>
-      <div class="mag-card reveal">
-        <div class="mag-type" style="color:var(--apple-orange)"><div class="mag-dot" style="background:var(--apple-orange)"></div>Newsletter</div>
-        <div class="mag-title">The Rust Report</div>
-        <p class="mag-desc">Veille technique et réglementaire Rust bi-mensuelle : benchmarks, nouvelles crates, actualités NSA/CISA, cas d'usage industrie. Séquence d'onboarding en 5 emails.</p>
-        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">S'abonner gratuitement <span>→</span></a>
-      </div>
-      <div class="mag-card reveal">
-        <div class="mag-type" style="color:var(--apple-teal)"><div class="mag-dot" style="background:var(--apple-teal)"></div>Mini-cours</div>
-        <div class="mag-title">5 jours pour comprendre Rust</div>
-        <p class="mag-desc">Email drip de 5 leçons non-techniques pour décideurs DSI/CTO : pourquoi Rust, ce que ça change pour votre infra, les chiffres, les entreprises qui l'ont adopté.</p>
-        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Démarrer la formation <span>→</span></a>
-      </div>
-      <div class="mag-card reveal">
-        <div class="mag-type" style="color:var(--apple-blue-l)"><div class="mag-dot" style="background:var(--apple-blue-l)"></div>Audit live</div>
-        <div class="mag-title">Démo 30 min offerte</div>
-        <p class="mag-desc">Un expert Thrustcode analyse en direct votre architecture et identifie 3 quick wins Rust concrets. Sans engagement. Booking Cal.com intégré. Réponse &lt;4h ouvrées.</p>
-        <a href="mailto:thrustcode@proton.me" class="mag-cta" style="text-decoration:none;">Réserver ma démo <span>→</span></a>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- TESTIMONIALS -->
-<section class="testimonials" id="testimonials">
-  <div class="mesh-wrap">
-    <div class="mesh-orb" style="width:600px;height:400px;background:radial-gradient(circle,rgba(191,90,242,0.06),transparent 70%);top:0;right:-100px;animation:float 20s ease-in-out infinite;"></div>
-  </div>
-  <div class="testimonials-inner">
-    <div class="section-eyebrow reveal">Témoignages</div>
-    <h2 class="section-h reveal">Ce que disent nos <span class="hi">clients.</span></h2>
-    <p class="section-sub reveal">Des équipes tech qui ont franchi le pas et mesurent les résultats.</p>
-    <div class="testi-grid">
-      <div class="testi-card reveal">
-        <div class="testi-quote">"Thrustcode a réduit notre latence p99 de 2,8s à 47ms en 6 semaines. La méthode est rigoureuse, les résultats sont auditables. C'est exactement ce qu'on cherchait."</div>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--apple-blue),var(--apple-purple))">JM</div>
-          <div>
-            <div class="testi-name">Jean-Marc Lefebvre</div>
-            <div class="testi-role">CTO · Fintech scale-up · Paris</div>
-          </div>
-          <div class="testi-metric">
-            <div class="testi-m-val">−98%</div>
-            <div class="testi-m-lbl">latence</div>
-          </div>
+      
+      <div class="glass-elevated process-cta reveal" data-reveal>
+        <div>
+          <div class="process-cta-title">Prêt à démarrer ?</div>
+          <div class="process-cta-sub">Premier atelier de diagnostic offert - Réponse &lt;4h ouvrées</div>
         </div>
-      </div>
-      <div class="testi-card reveal">
-        <div class="testi-quote">"La migration C++ → Rust a éliminé toute une classe de vulnérabilités mémoire. Le rapport CISA était exactement ce dont nous avions besoin pour notre audit NIS2."</div>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--apple-purple),var(--apple-teal))">SB</div>
-          <div>
-            <div class="testi-name">Sophie Bernard</div>
-            <div class="testi-role">RSSI · Éditeur logiciel · Lyon</div>
-          </div>
-          <div class="testi-metric">
-            <div class="testi-m-val">−70%</div>
-            <div class="testi-m-lbl">surface CVE</div>
-          </div>
-        </div>
-      </div>
-      <div class="testi-card reveal">
-        <div class="testi-quote">"On est passé de 18 à 6 instances EC2. La facture AWS a baissé de 61% le mois suivant. L'équipe Thrustcode a livré dans les délais, avec une doc complète."</div>
-        <div class="testi-author">
-          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--apple-green),var(--apple-teal))">AR</div>
-          <div>
-            <div class="testi-name">Alexis Renard</div>
-            <div class="testi-role">VP Engineering · SaaS B2B · Bordeaux</div>
-          </div>
-          <div class="testi-metric">
-            <div class="testi-m-val">−61%</div>
-            <div class="testi-m-lbl">coût cloud</div>
-          </div>
+        <div class="process-cta-btns">
+          <a href="#services" class="process-cta-btn process-cta-btn-secondary">En savoir plus</a>
+          <a href="#contact" class="btn-primary process-cta-btn process-cta-btn-primary">Démarrer le diagnostic →</a>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- FINAL CTA -->
-<section class="final" id="contact">
-  <div class="mesh-wrap">
-    <div class="mesh-orb" style="width:700px;height:400px;background:radial-gradient(ellipse,rgba(204,75,32,0.12),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);"></div>
-  </div>
-  <div class="final-card reveal">
-    <div class="hero-eyebrow" style="justify-content:center;margin-bottom:1.5rem;opacity:1;animation:none">
-      <span class="eyebrow-dot"></span>Premier atelier offert · Sans engagement
+  <!-- Services -->
+  <section class="section section-alt" id="services">
+    <div class="mesh-orb mesh-orb-purple animate-float" style="width:600px;height:600px;bottom:-200px;left:-150px"></div>
+    
+    <div class="container" style="position:relative;z-index:10">
+      <div class="reveal" data-reveal>
+        <div style="font-size:0.72rem;font-weight:500;color:var(--apple-blue-l);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">Nos services</div>
+        <h2 style="font-size:clamp(2rem,4vw,3.2rem);font-weight:600;letter-spacing:-0.035em;line-height:1.1">
+          Ce que nous <span class="gradient-text-accent">construisons.</span>
+        </h2>
+      </div>
+      
+      <div class="services-grid">
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-blue-l)">Performance</div>
+          <div class="service-name">Migration de goulots</div>
+          <p class="service-desc">Identification et réécriture des chemins critiques (Python/Java/Go → Rust). ROI immédiat sur CPU et latence.</p>
+          <div class="service-kpi font-mono">-40 à -80% CPU — x2 à x10 débit</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-blue-l)">Performance</div>
+          <div class="service-name">Refactoring de code vers Rust<span class="service-badge animate-pulse-glow">Nouveau</span></div>
+          <p class="service-desc">Modernisation progressive d'un codebase existant par modules. Méthode Strangler Fig, zero downtime, tests de non-régression continus.</p>
+          <div class="service-kpi font-mono">-40 à -70% dette technique — couverture tests >= 80%</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-blue-l)">Performance</div>
+          <div class="service-name">Microservices haute performance</div>
+          <p class="service-desc">Services Rust natifs (Actix-web, Axum, Tokio) optimisés pour le throughput et la latence p99 sous charge massive.</p>
+          <div class="service-kpi font-mono">60k rps — p99 &lt;15ms — cold start &lt;30ms</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-purple)">Sécurité</div>
+          <div class="service-name">Audit sécurité mémoire</div>
+          <p class="service-desc">Analyse selon les 20 critères CISA/NSA 2025. Rapport CVE potentiels, unsafe blocks, surface d'attaque.</p>
+          <div class="service-kpi font-mono">100% codebase — livraison &lt;10j — NIS2 / DORA</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-purple)">Sécurité</div>
+          <div class="service-name">Migration C/C++ → Rust</div>
+          <p class="service-desc">Réécriture sécurisée de composants critiques exposés réseau. Élimine les classes entières de CVE mémoire.</p>
+          <div class="service-kpi font-mono">-70% surface vulnérabilités — conformité NIS2</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-green)">Green IT</div>
+          <div class="service-name">Audit énergétique numérique</div>
+          <p class="service-desc">Mesure réelle de la consommation de vos workloads (RAPL, Scaphandre). Baseline CO2 par service, par API, par batch.</p>
+          <div class="service-kpi font-mono">Mesure milliseconde — rapport CSRD-ready</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-green)">Green IT</div>
+          <div class="service-name">Migration green</div>
+          <p class="service-desc">Remplacement des workloads les plus énergivores par des équivalents Rust. Économies mesurées et exportables.</p>
+          <div class="service-kpi font-mono">-50% vs Java — -98% vs Python (source AWS)</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-teal)">Transversal</div>
+          <div class="service-name">Embedded & firmware Rust</div>
+          <p class="service-desc">Firmware sur microcontrôleurs (STM32, ESP32, RISC-V) en Rust bare-metal. Fiabilité et sécurité sans RTOS.</p>
+          <div class="service-kpi font-mono">Zéro unsafe non justifié — industrie — médical</div>
+        </div>
+        
+        <div class="glass-card service-card reveal" data-reveal>
+          <div class="service-category" style="color:var(--apple-teal)">Transversal</div>
+          <div class="service-name">Formation Rust équipes</div>
+          <p class="service-desc">Parcours de montée en compétences sur mesure : 3 niveaux (découverte, intermédiaire, expert). Intra ou inter-entreprise.</p>
+          <div class="service-kpi font-mono">3 jours → autonomie basique — 10j → prod-ready</div>
+        </div>
+      </div>
     </div>
-    <h2 class="final-title">Votre prochain projet<br>en <span style="background:linear-gradient(135deg,var(--apple-blue-l),var(--apple-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Rust.</span></h2>
-    <p class="final-sub">Recevez votre audit de performance gratuit en 48h. Nos experts analysent votre stack actuelle et identifient 3 quick wins concrets — mesurés, chiffrés, actionnables.</p>
-    <div style="margin-top:2rem;text-align:center;">
-      <a href="mailto:thrustcode@proton.me" class="btn-apple" style="display:inline-block;text-decoration:none;">Obtenir mon audit gratuit →</a>
-    </div>
-    <p class="final-note" style="margin-top:1.5rem;">Réponse &lt;4h ouvrées · Sans engagement · 100% confidentiel</p>
-  </div>
-</section>
+  </section>
 
-<!-- FOOTER -->
-<footer>
-  <div>
-    <div class="foot-logo">
-      <a href="#" class="logo">
-        <div class="logo-mark"><svg viewBox="0 0 12 12"><path d="M6 1L11 4v4L6 11 1 8V4z"/></svg></div>
-        thrustcode
+  <!-- Lead Magnets -->
+  <section class="section" id="magnets">
+    <div class="mesh-orb mesh-orb-orange animate-float" style="width:500px;height:500px;top:0;left:-100px;opacity:0.35"></div>
+    
+    <div class="container" style="position:relative;z-index:10">
+      <div class="reveal" data-reveal>
+        <div style="font-size:0.72rem;font-weight:500;color:var(--apple-blue-l);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">Ressources gratuites</div>
+        <h2 style="font-size:clamp(2rem,4vw,3.2rem);font-weight:600;letter-spacing:-0.03em;line-height:1.1">
+          Commencez par vous <span class="gradient-text-accent">convaincre.</span>
+        </h2>
+        <p style="font-size:1rem;color:var(--t2);max-width:480px;line-height:1.65;margin-top:14px">
+          Six outils concrets pour mesurer, avant toute conversation commerciale, ce que Rust peut apporter à votre stack.
+        </p>
+      </div>
+      
+      <div class="magnets-grid">
+        <div class="glass-card magnet-card reveal" data-reveal>
+          <div class="magnet-type" style="color:var(--apple-blue-l)">
+            <span class="magnet-dot" style="background:var(--apple-blue-l)"></span>
+            Outil interactif
+          </div>
+          <div class="magnet-title">Calculateur ROI cloud</div>
+          <p class="magnet-desc">Saisissez votre stack, votre trafic mensuel et votre facture cloud. L'outil calcule les économies potentielles avec Rust (CPU, RAM, €/mois). Résultat envoyé par email.</p>
+          <div class="magnet-cta">Obtenir mon estimation <span>→</span></div>
+        </div>
+        
+        <div class="glass-card magnet-card reveal" data-reveal>
+          <div class="magnet-type" style="color:var(--apple-green)">
+            <span class="magnet-dot" style="background:var(--apple-green)"></span>
+            Simulateur CO₂
+          </div>
+          <div class="magnet-title">Empreinte carbone numérique</div>
+          <p class="magnet-desc">Calcule les tonnes de CO₂ économisées par an en migrant vers Rust. Export PDF avec données auditables pour vos rapports CSRD. Angle Green IT unique sur le marché ESN.</p>
+          <div class="magnet-cta">Simuler mon impact <span>→</span></div>
+        </div>
+        
+        <div class="glass-card magnet-card reveal" data-reveal>
+          <div class="magnet-type" style="color:var(--apple-purple)">
+            <span class="magnet-dot" style="background:var(--apple-purple)"></span>
+            Rapport PDF
+          </div>
+          <div class="magnet-title">Audit sécurité mémoire offert</div>
+          <p class="magnet-desc">Checklist de 20 vérifications basée sur les guidelines CISA/NSA juin 2025. Format PDF brandé, généré automatiquement après soumission du formulaire.</p>
+          <div class="magnet-cta">Télécharger l'audit <span>→</span></div>
+        </div>
+        
+        <div class="glass-card magnet-card reveal" data-reveal>
+          <div class="magnet-type" style="color:var(--apple-orange)">
+            <span class="magnet-dot" style="background:var(--apple-orange)"></span>
+            Newsletter
+          </div>
+          <div class="magnet-title">The Rust Report</div>
+          <p class="magnet-desc">Veille technique et réglementaire Rust bi-mensuelle : benchmarks, nouvelles crates, actualités NSA/CISA, cas d'usage industrie. Séquence d'onboarding en 5 emails.</p>
+          <div class="magnet-cta">S'abonner gratuitement <span>→</span></div>
+        </div>
+        
+        <div class="glass-card magnet-card reveal" data-reveal>
+          <div class="magnet-type" style="color:var(--apple-teal)">
+            <span class="magnet-dot" style="background:var(--apple-teal)"></span>
+            Mini-cours
+          </div>
+          <div class="magnet-title">5 jours pour comprendre Rust</div>
+          <p class="magnet-desc">Email drip de 5 leçons non-techniques pour décideurs DSI/CTO : pourquoi Rust, ce que ça change pour votre infra, les chiffres, les entreprises qui l'ont adopté.</p>
+          <div class="magnet-cta">Démarrer la formation <span>→</span></div>
+        </div>
+        
+        <div class="glass-card magnet-card reveal" data-reveal>
+          <div class="magnet-type" style="color:var(--apple-blue-l)">
+            <span class="magnet-dot" style="background:var(--apple-blue-l)"></span>
+            Audit live
+          </div>
+          <div class="magnet-title">Démo 30 min offerte</div>
+          <p class="magnet-desc">Un expert Thrustcode analyse en direct votre architecture et identifie 3 quick wins Rust concrets. Sans engagement. Booking Cal.com intégré. Réponse &lt;4h ouvrées.</p>
+          <div class="magnet-cta">Réserver ma démo <span>→</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section" id="testimonials" style="padding-top:96px">
+    <div class="mesh-orb mesh-orb-purple animate-float" style="width:600px;height:400px;top:0;right:-100px;opacity:0.35"></div>
+    
+    <div class="container" style="position:relative;z-index:10">
+      <div class="reveal" data-reveal>
+        <div style="font-size:0.72rem;font-weight:500;color:var(--apple-blue-l);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">Témoignages</div>
+        <h2 style="font-size:clamp(2rem,4vw,3.2rem);font-weight:600;letter-spacing:-0.03em;line-height:1.1">
+          Ce que disent nos <span class="gradient-text-accent">clients.</span>
+        </h2>
+        <p style="font-size:1rem;color:var(--t2);max-width:480px;line-height:1.65;margin-top:14px">
+          Des équipes tech qui ont franchi le pas et mesurent les résultats.
+        </p>
+      </div>
+      
+      <div class="testimonials-grid">
+        <div class="glass-card testimonial-card reveal" data-reveal>
+          <div class="testimonial-quote">"Thrustcode a réduit notre latence p99 de 2,8s à 47ms en 6 semaines. La méthode est rigoureuse, les résultats sont auditables. C'est exactement ce qu'on cherchait."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--apple-blue),var(--apple-purple))">JM</div>
+            <div>
+              <div class="testimonial-name">Jean-Marc Lefebvre</div>
+              <div class="testimonial-role">CTO - Fintech scale-up - Paris</div>
+            </div>
+            <div class="testimonial-metric">
+              <div class="testimonial-metric-value gradient-text-accent">-98%</div>
+              <div class="testimonial-metric-label">latence</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card testimonial-card reveal" data-reveal>
+          <div class="testimonial-quote">"La migration C++ → Rust a éliminé toute une classe de vulnérabilités mémoire. Le rapport CISA était exactement ce dont nous avions besoin pour notre audit NIS2."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--apple-purple),var(--apple-teal))">SB</div>
+            <div>
+              <div class="testimonial-name">Sophie Bernard</div>
+              <div class="testimonial-role">RSSI - Éditeur logiciel - Lyon</div>
+            </div>
+            <div class="testimonial-metric">
+              <div class="testimonial-metric-value gradient-text-accent">-70%</div>
+              <div class="testimonial-metric-label">surface CVE</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card testimonial-card reveal" data-reveal>
+          <div class="testimonial-quote">"On est passé de 18 à 6 instances EC2. La facture AWS a baissé de 61% le mois suivant. L'équipe Thrustcode a livré dans les délais, avec une doc complète."</div>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--apple-green),var(--apple-teal))">AR</div>
+            <div>
+              <div class="testimonial-name">Alexis Renard</div>
+              <div class="testimonial-role">VP Engineering - SaaS B2B - Bordeaux</div>
+            </div>
+            <div class="testimonial-metric">
+              <div class="testimonial-metric-value gradient-text-accent">-61%</div>
+              <div class="testimonial-metric-label">coût cloud</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq" style="padding-top:96px">
+    <div class="mesh-orb mesh-orb-green animate-float-slow" style="width:500px;height:500px;top:10%;right:-100px"></div>
+    
+    <div class="faq-container" style="position:relative;z-index:10">
+      <div class="faq-header reveal" data-reveal>
+        <span class="glass-button faq-badge">FAQ</span>
+        <h2 class="faq-title">Questions fréquentes</h2>
+        <p class="faq-subtitle">Tout ce que vous devez savoir sur la migration Rust et nos services</p>
+      </div>
+      
+      <div class="faq-list reveal" data-reveal>
+        <div class="glass-card faq-item open" data-faq>
+          <button class="faq-question">
+            Pourquoi migrer vers Rust ?
+            <div class="glass faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p class="faq-answer-text">Rust offre des performances proches du C/C++ avec une sécurité mémoire garantie à la compilation. Cela élimine les bugs de mémoire (buffer overflow, use-after-free) tout en réduisant la consommation énergétique de 50% en moyenne. C'est le langage idéal pour les systèmes critiques et les applications haute performance.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card faq-item" data-faq>
+          <button class="faq-question">
+            Combien de temps dure une migration Rust ?
+            <div class="glass faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p class="faq-answer-text">Une migration typique prend entre 2 et 6 mois selon la complexité du code existant. Nous commençons par les goulots d'étranglement pour un ROI rapide, généralement visible dès le premier sprint. Notre approche incrémentale permet de livrer de la valeur rapidement tout en minimisant les risques.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card faq-item" data-faq>
+          <button class="faq-question">
+            L'audit de performance est-il vraiment gratuit ?
+            <div class="glass faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p class="faq-answer-text">Oui, notre audit initial de 48h est entièrement gratuit et sans engagement. Vous recevez un rapport détaillé avec les points d'optimisation identifiés, les gains potentiels estimés et nos recommandations. C'est notre façon de démontrer notre expertise avant tout engagement.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card faq-item" data-faq>
+          <button class="faq-question">
+            Travaillez-vous avec des équipes existantes ?
+            <div class="glass faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p class="faq-answer-text">Absolument. Nous proposons du consulting, de la formation et du pair programming pour monter en compétences vos équipes sur Rust. Notre approche privilégie le transfert de connaissances pour que votre équipe devienne autonome. Nous pouvons aussi intégrer des développeurs Rust directement dans vos équipes.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card faq-item" data-faq>
+          <button class="faq-question">
+            Quels sont les gains typiques après migration ?
+            <div class="glass faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p class="faq-answer-text">Nos clients observent en moyenne : 40x de gain en latence, 50% de réduction de la consommation CPU/mémoire, et zéro CVE liée à la mémoire après migration. Ces gains se traduisent directement par des économies d'infrastructure et une meilleure expérience utilisateur.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="glass-card faq-item" data-faq>
+          <button class="faq-question">
+            Comment se déroule un projet type ?
+            <div class="glass faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </div>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              <p class="faq-answer-text">Notre processus en 5 étapes : 1) Audit gratuit pour identifier les opportunités, 2) Spike technique pour valider l'approche, 3) Migration itérative par sprints de 2 semaines, 4) Tests de performance et validation, 5) Accompagnement post-migration. Chaque étape est validée avant de passer à la suivante.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="faq-cta reveal" data-reveal>
+        <p class="faq-cta-text">Vous avez d'autres questions ?</p>
+        <a href="#contact" class="faq-cta-link">
+          Contactez-nous directement
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(-90deg)">
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta section-alt" id="contact">
+    <div class="mesh-orb mesh-orb-orange animate-breathe" style="width:800px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+    
+    <div class="glass-elevated final-cta-card reveal" data-reveal style="position:relative;z-index:10">
+      <div class="glass-button final-cta-badge">
+        <span class="final-cta-dot animate-pulse-glow"></span>
+        Premier atelier offert — Sans engagement
+      </div>
+      
+      <h2 class="final-cta-title gradient-text">
+        Votre prochain projet<br>en <span class="gradient-text-accent">Rust.</span>
+      </h2>
+      
+      <p class="final-cta-desc">
+        Recevez votre audit de performance gratuit en 48h. Nos experts analysent votre stack actuelle et identifient 3 quick wins concrets — mesurés, chiffrés, actionnables.
+      </p>
+      
+      <a href="mailto:thrustcode@proton.me?subject=Demande%20d%27audit%20de%20performance%20gratuit&body=Bonjour%2C%0A%0AJe%20souhaite%20obtenir%20un%20audit%20de%20performance%20gratuit%20pour%20mon%20projet.%0A%0AMon%20stack%20actuel%20:%0A%0AMes%20enjeux%20:%0A%0ACordialement" class="btn-primary final-cta-btn">
+        Obtenir mon audit gratuit →
       </a>
+      
+      <div class="final-cta-features">
+        <span class="final-cta-feature">
+          <span class="final-cta-feature-dot"></span>
+          Réponse &lt;4h ouvrées
+        </span>
+        <span class="final-cta-feature">
+          <span class="final-cta-feature-dot"></span>
+          Sans engagement
+        </span>
+        <span class="final-cta-feature">
+          <span class="final-cta-feature-dot"></span>
+          100% confidentiel
+        </span>
+      </div>
     </div>
-    <p class="foot-desc">ESN spécialisée Rust. Performance extrême, sécurité mémoire, Green IT. Basée à Paris, active à l'international.</p>
-  </div>
-  <div class="foot-col">
-    <h5>Services</h5>
-    <ul class="foot-links">
-      <li><a href="#">Performance</a></li>
-      <li><a href="#">Sécurité</a></li>
-      <li><a href="#">Green IT</a></li>
-      <li><a href="#">Embedded</a></li>
-      <li><a href="#">Refactoring</a></li>
-    </ul>
-  </div>
-  <div class="foot-col">
-    <h5>Ressources</h5>
-    <ul class="foot-links">
-      <li><a href="#">Blog</a></li>
-      <li><a href="#">Academy</a></li>
-      <li><a href="#">Case studies</a></li>
-      <li><a href="#">The Rust Report</a></li>
-    </ul>
-  </div>
-  <div class="foot-col">
-    <h5>Entreprise</h5>
-    <ul class="foot-links">
-      <li><a href="#">À propos</a></li>
-      <li><a href="#">Manifeste</a></li>
-      <li><a href="#">Contact</a></li>
-      <li><a href="#">GitHub</a></li>
-    </ul>
-  </div>
-</footer>
-<div class="foot-bottom">
-  <span class="foot-copy">© 2025 Thrustcode SAS · thrustcode.dev</span>
-  <span class="foot-tech">Built with <span>Rust</span> · Powered by <span>Claude</span></span>
-</div>
+  </section>
 
-<script>
-/* Cursor */
-const cur = document.getElementById('cur');
-const ring = document.getElementById('cur-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
-(function anim(){
-  rx+=(mx-rx)*.13; ry+=(my-ry)*.13;
-  cur.style.cssText=`left:${mx}px;top:${my}px;`;
-  ring.style.cssText=`left:${rx}px;top:${ry}px;`;
-  requestAnimationFrame(anim);
-})();
+  <!-- Footer -->
+  <footer class="footer">
+    <div>
+      <a href="#" class="footer-logo">thrustcode</a>
+      <p class="footer-desc">ESN spécialisée Rust. Performance extrême, sécurité mémoire, Green IT. Basée à Paris, active à l'international.</p>
+    </div>
+    
+    <div>
+      <h5 class="footer-heading">Services</h5>
+      <ul class="footer-links">
+        <li><a href="#services" class="footer-link">Performance</a></li>
+        <li><a href="#services" class="footer-link">Sécurité</a></li>
+        <li><a href="#services" class="footer-link">Green IT</a></li>
+        <li><a href="#services" class="footer-link">Embedded</a></li>
+        <li><a href="#services" class="footer-link">Refactoring</a></li>
+      </ul>
+    </div>
+    
+    <div>
+      <h5 class="footer-heading">Ressources</h5>
+      <ul class="footer-links">
+        <li><a href="#" class="footer-link">Blog</a></li>
+        <li><a href="#" class="footer-link">Academy</a></li>
+        <li><a href="#" class="footer-link">Case studies</a></li>
+        <li><a href="#magnets" class="footer-link">The Rust Report</a></li>
+      </ul>
+    </div>
+    
+    <div>
+      <h5 class="footer-heading">Entreprise</h5>
+      <ul class="footer-links">
+        <li><a href="#" class="footer-link">À propos</a></li>
+        <li><a href="#" class="footer-link">Manifeste</a></li>
+        <li><a href="#contact" class="footer-link">Contact</a></li>
+        <li><a href="#" class="footer-link">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+  
+  <div class="footer-bottom">
+    <span class="footer-copy">© <span id="year"></span> Thrustcode SAS - thrustcode.dev</span>
+    <div class="footer-right">
+      <span class="footer-credit">Built with <span class="footer-accent">Rust</span> - Powered by <span class="footer-accent">Claude</span></span>
+    </div>
+  </div>
 
-/* Scroll reveal */
-const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
-document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  <!-- Sticky CTA (Mobile) -->
+  <div class="sticky-cta" id="sticky-cta">
+    <div class="sticky-cta-text">
+      <div class="sticky-cta-urgency">
+        <span class="sticky-cta-urgency-dot animate-pulse-dot"></span>
+        3 places restantes ce mois
+      </div>
+      <div class="sticky-cta-title">Audit gratuit 48h</div>
+    </div>
+    <a href="#contact" class="btn-primary sticky-cta-btn">Réserver</a>
+  </div>
 
-
-</script>
+  <script>
+    // Dynamic year
+    document.getElementById('year').textContent = new Date().getFullYear();
+    
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    let lastScroll = 0;
+    
+    window.addEventListener('scroll', () => {
+      const currentScroll = window.scrollY;
+      if (currentScroll > 20) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+      lastScroll = currentScroll;
+    }, { passive: true });
+    
+    // Mobile menu
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    let menuOpen = false;
+    
+    mobileMenuBtn.addEventListener('click', () => {
+      menuOpen = !menuOpen;
+      mobileMenu.classList.toggle('open', menuOpen);
+      mobileMenuBtn.innerHTML = menuOpen 
+        ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
+        : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>';
+    });
+    
+    // Close mobile menu on link click
+    document.querySelectorAll('.mobile-menu-link').forEach(link => {
+      link.addEventListener('click', () => {
+        menuOpen = false;
+        mobileMenu.classList.remove('open');
+        mobileMenuBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>';
+      });
+    });
+    
+    // Sticky CTA visibility
+    const stickyCta = document.getElementById('sticky-cta');
+    const heroSection = document.getElementById('hero');
+    
+    const observerSticky = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        stickyCta.classList.toggle('visible', !entry.isIntersecting);
+      });
+    }, { threshold: 0 });
+    
+    observerSticky.observe(heroSection);
+    
+    // Reveal on scroll
+    const revealElements = document.querySelectorAll('[data-reveal]');
+    
+    const observerReveal = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    
+    revealElements.forEach(el => observerReveal.observe(el));
+    
+    // FAQ accordion
+    document.querySelectorAll('[data-faq]').forEach(item => {
+      const button = item.querySelector('.faq-question');
+      button.addEventListener('click', () => {
+        const wasOpen = item.classList.contains('open');
+        
+        // Close all
+        document.querySelectorAll('[data-faq]').forEach(i => i.classList.remove('open'));
+        
+        // Toggle current
+        if (!wasOpen) {
+          item.classList.add('open');
+        }
+      });
+    });
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
 </body>
 </html>
